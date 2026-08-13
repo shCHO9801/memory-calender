@@ -1,0 +1,19 @@
+# Environment
+.env
+.env.local
+.env.production
+
+# Frontend
+frontend/node_modules/
+frontend/.next/
+
+# Backend
+backend/.gradle/
+backend/build/
+
+# IDE
+.idea/
+.vscode/
+
+# OS
+.DS_Store
