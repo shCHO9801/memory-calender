@@ -1,0 +1,17 @@
+services:
+  postgres:
+    image: postgres:17
+    container_name: memory-calendar-postgres
+    environment:
+      POSTGRES_DB: memory_calendar
+      POSTGRES_USER: memory_calendar
+      POSTGRES_PASSWORD: local_password
+
+    ports:
+      - "5432:5432"
+
+    volumes:
+      - memory_calendar_postgres_data:/var/lib/postgresql/data
+
+volumes:
+  memory_calendar_postgres_data:
