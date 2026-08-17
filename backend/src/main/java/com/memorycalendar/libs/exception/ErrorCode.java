@@ -23,7 +23,7 @@ public enum ErrorCode {
     /* 409 Conflict*/
     DUPLICATE_EMAIL(
             HttpStatus.CONFLICT,
-            "USER_002",
+            "USER_001",
             "이미 사용 중인 이메일입니다."
     ),
 

@@ -8,6 +8,7 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.HandlerMethodValidationException;
 
 @Slf4j
 @RestControllerAdvice
@@ -77,5 +78,36 @@ public class GlobalExceptionHandler {
                         field
                         )
                 );
+    }
+
+    @ExceptionHandler(HandlerMethodValidationException.class)
+    public ResponseEntity<ExceptionResponseDto> handleMethodValidationException(
+            HandlerMethodValidationException e
+    ) {
+        log.warn("Method Validation 오류 발생: {}", e.getMessage());
+
+        String message = "잘못된 요청입니다.";
+        String field = null;
+
+        if (!e.getParameterValidationResults().isEmpty()) {
+            var result = e.getParameterValidationResults().getFirst();
+
+            if (!result.getResolvableErrors().isEmpty()) {
+                message = result.getResolvableErrors()
+                        .getFirst()
+                        .getDefaultMessage();
+            }
+
+            field = result.getMethodParameter()
+                    .getParameterName();
+        }
+
+        return ResponseEntity
+                .badRequest()
+                .body(ExceptionResponseDto.ofValidation(
+                        HttpStatus.BAD_REQUEST.value(),
+                        message,
+                        field
+                ));
     }
 }
