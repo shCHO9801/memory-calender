@@ -1,9 +1,8 @@
 package com.memorycalendar.auth.controller;
 
-import com.memorycalendar.auth.dto.EmailCheckResponseDto;
-import com.memorycalendar.auth.dto.UserSignupRequestDto;
-import com.memorycalendar.auth.dto.UserSignupResponseDto;
+import com.memorycalendar.auth.dto.*;
 import com.memorycalendar.auth.service.AuthService;
+import com.memorycalendar.auth.service.dto.UserSignInResult;
 import com.memorycalendar.user.entity.User;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
@@ -43,5 +42,14 @@ public class AuthController {
         return ResponseEntity.ok(
                 new EmailCheckResponseDto(result)
         );
+    }
+
+    @PostMapping("/signin")
+    public ResponseEntity<UserSignInResponseDto> signin(
+            @Valid @RequestBody UserSignInRequestDto requestDto
+    ) {
+        UserSignInResult result = authService.signin(requestDto);
+
+        return ResponseEntity.ok(UserSignInResponseDto.from(result));
     }
 }

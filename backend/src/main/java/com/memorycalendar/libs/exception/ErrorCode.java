@@ -10,6 +10,11 @@ public enum ErrorCode {
     /* 400 BAD_REQUEST */
 
     /* 401 UNAUTHORIZED */
+    INVALID_CREDENTIALS(
+            HttpStatus.UNAUTHORIZED,
+            "AUTH_001",
+            "이메일 또는 비밀번호가 올바르지 않습니다."
+    ),
 
     /* 403 FORBIDDEN */
 
@@ -23,7 +28,7 @@ public enum ErrorCode {
     /* 409 Conflict*/
     DUPLICATE_EMAIL(
             HttpStatus.CONFLICT,
-            "USER_001",
+            "USER_002",
             "이미 사용 중인 이메일입니다."
     ),
 
