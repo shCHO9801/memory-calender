@@ -10,6 +10,7 @@ import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -51,5 +52,10 @@ public class AuthController {
         UserSignInResult result = authService.signin(requestDto);
 
         return ResponseEntity.ok(UserSignInResponseDto.from(result));
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<String> me(Authentication authentication) {
+        return ResponseEntity.ok(authentication.getName());
     }
 }
