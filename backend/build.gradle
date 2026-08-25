@@ -45,6 +45,10 @@ dependencies {
 
 	// JWT
 	implementation 'org.springframework.boot:spring-boot-starter-oauth2-resource-server'
+
+	// AI
+	implementation platform("org.springframework.ai:spring-ai-bom:2.0.1")
+	implementation 'org.springframework.ai:spring-ai-starter-model-google-genai'
 }
 
 tasks.named('test') {
