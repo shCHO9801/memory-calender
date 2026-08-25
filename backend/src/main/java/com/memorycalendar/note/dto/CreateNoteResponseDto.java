@@ -5,7 +5,7 @@ import com.memorycalendar.note.entity.Note;
 import java.time.LocalDateTime;
 
 public record CreateNoteResponseDto(
-        Long userId,
+        Long noteId,
         String content,
         LocalDateTime createdAt
 ) {
