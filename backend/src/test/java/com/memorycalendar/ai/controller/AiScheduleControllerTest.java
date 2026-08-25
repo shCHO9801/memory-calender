@@ -44,7 +44,6 @@ class AiScheduleControllerTest {
     @MockitoBean
     GeminiClient geminiClient;
 
-    private User user;
     private Note note;
     private String accessToken;
 
@@ -54,7 +53,7 @@ class AiScheduleControllerTest {
         noteRepository.deleteAll();
         userRepository.deleteAll();
 
-        user = userRepository.save(
+        User user = userRepository.save(
                 User.of(
                         "test@example.com",
                         passwordEncoder.encode("password123!"),
@@ -73,7 +72,7 @@ class AiScheduleControllerTest {
     }
 
     @Test
-    void 일정_추출_AI_호출_실패() throws Exception {
+    void aiScheduleExtractionFailsWhenApiCallFails() throws Exception {
         // given
         given(geminiClient.extractSchedule(anyString()))
                 .willThrow(new CustomException(AI_API_ERROR));
@@ -110,7 +109,7 @@ class AiScheduleControllerTest {
                 .getResponse()
                 .getContentAsString();
 
-        // 간단하게 Jackson으로 accessToken 추출
+        // 간단하게 Jackson 으로 accessToken 추출
         com.fasterxml.jackson.databind.ObjectMapper objectMapper =
                 new com.fasterxml.jackson.databind.ObjectMapper();
 
