@@ -4,10 +4,7 @@ import com.memorycalendar.global.common.entity.BaseEntity;
 import com.memorycalendar.note.entity.Note;
 import com.memorycalendar.user.entity.User;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.time.LocalDateTime;
 
@@ -15,7 +12,7 @@ import java.time.LocalDateTime;
 @Table(name = "events")
 @Getter
 @Builder
-@NoArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 
 public class Event extends BaseEntity {
