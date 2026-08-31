@@ -2,6 +2,7 @@ package com.memorycalendar.event.service;
 
 import com.memorycalendar.event.dto.CreateEventRequestDto;
 import com.memorycalendar.event.dto.EventResponseDto;
+import com.memorycalendar.event.dto.UpdateEventRequestDto;
 import com.memorycalendar.event.entity.Event;
 import com.memorycalendar.event.repository.EventRepository;
 import com.memorycalendar.libs.exception.CustomException;
@@ -77,5 +78,26 @@ public class EventService {
                         pageable
                 )
                 .map(EventResponseDto::from);
+    }
+
+    @Transactional
+    public Event updateEvent(Long userId, Long eventId, UpdateEventRequestDto requestDto) {
+
+        Event event = getEvent(userId, eventId);
+
+        if (requestDto.endAt() != null
+                && requestDto.endAt().isBefore(requestDto.startAt())) {
+            throw new CustomException(INVALID_EVENT_TIME);
+        }
+
+        event.update(
+                requestDto.title(),
+                requestDto.description(),
+                requestDto.startAt(),
+                requestDto.endAt(),
+                requestDto.allDay()
+        );
+
+        return event;
     }
 }

@@ -1,8 +1,6 @@
 package com.memorycalendar.event.controller;
 
-import com.memorycalendar.event.dto.CreateEventRequestDto;
-import com.memorycalendar.event.dto.CreateEventResponseDto;
-import com.memorycalendar.event.dto.EventResponseDto;
+import com.memorycalendar.event.dto.*;
 import com.memorycalendar.event.entity.Event;
 import com.memorycalendar.event.service.EventService;
 import com.memorycalendar.libs.dto.SliceResponseDto;
@@ -84,5 +82,17 @@ public class EventController {
                 eventService.getEvents(userId, startAt, endAt, pageable);
 
         return ResponseEntity.ok(SliceResponseDto.from(events));
+    }
+
+    @PatchMapping("/{eventId}")
+    public ResponseEntity<UpdateEventResponseDto> updateEvent(
+            Authentication authentication,
+            @PathVariable Long eventId,
+            @Valid @RequestBody UpdateEventRequestDto requestDto
+    ) {
+        Long userId = Long.valueOf(authentication.getName());
+        Event event = eventService.updateEvent(userId, eventId, requestDto);
+
+        return ResponseEntity.ok(UpdateEventResponseDto.from(event));
     }
 }
