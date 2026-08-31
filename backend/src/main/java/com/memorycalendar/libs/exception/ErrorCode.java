@@ -36,6 +36,11 @@ public enum ErrorCode {
             "NOTE_001",
             "노트를 찾을 수 없습니다."),
 
+    EVENT_NOT_FOUND(
+            HttpStatus.NOT_FOUND,
+            "EVENT_002",
+            "노트를 찾을 수 없습니다."),
+
     /* 409 Conflict*/
     DUPLICATE_EMAIL(
             HttpStatus.CONFLICT,

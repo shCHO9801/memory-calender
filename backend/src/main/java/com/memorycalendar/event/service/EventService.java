@@ -1,6 +1,7 @@
 package com.memorycalendar.event.service;
 
 import com.memorycalendar.event.dto.CreateEventRequestDto;
+import com.memorycalendar.event.dto.EventResponseDto;
 import com.memorycalendar.event.entity.Event;
 import com.memorycalendar.event.repository.EventRepository;
 import com.memorycalendar.libs.exception.CustomException;
@@ -10,7 +11,11 @@ import com.memorycalendar.user.entity.User;
 import com.memorycalendar.user.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
+
+import java.time.LocalDateTime;
 
 import static com.memorycalendar.libs.exception.ErrorCode.*;
 
@@ -50,5 +55,27 @@ public class EventService {
         );
 
         return eventRepository.save(newEvent);
+    }
+
+    public Event getEvent(Long userId, Long eventId) {
+
+        return eventRepository.findByIdAndUserId(eventId, userId)
+                .orElseThrow(() -> new CustomException(EVENT_NOT_FOUND));
+    }
+
+    public Slice<EventResponseDto> getEvents(
+            Long userId,
+            LocalDateTime startAt,
+            LocalDateTime endAt,
+            Pageable pageable
+    ) {
+        return eventRepository
+                .findAllByUserIdAndStartAtBetween(
+                        userId,
+                        startAt,
+                        endAt,
+                        pageable
+                )
+                .map(EventResponseDto::from);
     }
 }
