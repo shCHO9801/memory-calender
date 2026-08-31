@@ -95,4 +95,16 @@ public class EventController {
 
         return ResponseEntity.ok(UpdateEventResponseDto.from(event));
     }
+
+    @DeleteMapping("/{eventId}")
+    public ResponseEntity<Void> deleteEvent(
+            Authentication authentication,
+            @PathVariable Long eventId
+    ) {
+        Long userId = Long.valueOf(authentication.getName());
+
+        eventService.deleteEvent(userId, eventId);
+
+        return ResponseEntity.noContent().build();
+    }
 }
