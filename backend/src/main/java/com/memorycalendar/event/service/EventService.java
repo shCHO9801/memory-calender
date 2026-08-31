@@ -100,4 +100,10 @@ public class EventService {
 
         return event;
     }
+
+    @Transactional
+    public void deleteEvent(Long userId, Long eventId) {
+        Event event = getEvent(userId, eventId);
+        eventRepository.delete(event);
+    }
 }
