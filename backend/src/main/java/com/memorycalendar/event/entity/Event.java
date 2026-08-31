@@ -44,7 +44,7 @@ public class Event extends BaseEntity {
     @Column(name = "all_day", nullable = false)
     private boolean allDay;
 
-    public static Event of (
+    public static Event of(
             User user,
             Note note,
             String title,
@@ -62,5 +62,19 @@ public class Event extends BaseEntity {
                 .endAt(endAt)
                 .allDay(allDay)
                 .build();
+    }
+
+    public void update(
+            String title,
+            String description,
+            LocalDateTime startAt,
+            LocalDateTime endAt,
+            boolean allDay
+    ) {
+        this.title = title;
+        this.description = description;
+        this.startAt = startAt;
+        this.endAt = endAt;
+        this.allDay = allDay;
     }
 }
