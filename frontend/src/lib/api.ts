@@ -1,3 +1,8 @@
+import {
+  getAccessToken,
+  removeAccessToken,
+} from "@/lib/auth-storage";
+
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8080";
 
@@ -27,10 +32,7 @@ export async function apiFetch<T>(
   path: string,
   options: RequestInit = {},
 ): Promise<T> {
-  const token =
-    typeof window !== "undefined"
-      ? localStorage.getItem("accessToken")
-      : null;
+  const token = getAccessToken();
 
   const response = await fetch(`${API_BASE_URL}${path}`, {
     ...options,
@@ -46,6 +48,14 @@ export async function apiFetch<T>(
   if (!response.ok) {
     const errorResponse =
       (await response.json()) as ApiErrorResponse;
+
+    if (response.status === 401) {
+      removeAccessToken();
+
+      if (typeof window !== "undefined") {
+        window.location.replace("/login");
+      }
+    }
 
     throw new ApiError(errorResponse);
   }

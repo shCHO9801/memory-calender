@@ -1,4 +1,5 @@
 import { apiFetch } from "@/lib/api";
+import { removeAccessToken } from "@/lib/auth-storage";
 import type {
   CheckEmailResponse,
   SignInRequest,
@@ -25,4 +26,8 @@ export function checkEmail(email: string) {
   return apiFetch<CheckEmailResponse>(
     `/api/auth/check-email?email=${encodeURIComponent(email)}`,
   );
+}
+
+export function logout() {
+  removeAccessToken();
 }

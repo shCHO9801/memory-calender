@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 
 import { checkEmail, signUp } from "@/lib/auth";
+import { getAccessToken } from "@/lib/auth-storage";
 import { ApiError } from "@/lib/api";
 
 export default function SignUpPage() {
@@ -27,6 +28,12 @@ export default function SignUpPage() {
 
   const [isSubmitting, setIsSubmitting] =
     useState(false);
+
+  useEffect(() => {
+    if (getAccessToken()) {
+      router.replace("/notes");
+    }
+  }, [router]);
 
   const handleEmailChange = (value: string) => {
     setEmail(value);

@@ -1,8 +1,13 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
+
 import { signIn } from "@/lib/auth";
+import {
+  getAccessToken,
+  setAccessToken,
+} from "@/lib/auth-storage";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -11,6 +16,12 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    if (getAccessToken()) {
+      router.replace("/notes");
+    }
+  }, [router]);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -24,7 +35,7 @@ export default function LoginPage() {
         password,
       });
 
-      localStorage.setItem("accessToken", response.accessToken);
+      setAccessToken(response.accessToken);
 
       router.push("/notes");
     } catch {
