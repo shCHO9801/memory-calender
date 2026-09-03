@@ -1,6 +1,28 @@
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8080";
 
+export type ApiErrorResponse = {
+  status: number;
+  message: string;
+  code: string | null;
+  field: string | null;
+};
+
+export class ApiError extends Error {
+  status: number;
+  code: string | null;
+  field: string | null;
+
+  constructor(response: ApiErrorResponse) {
+    super(response.message);
+
+    this.name = "ApiError";
+    this.status = response.status;
+    this.code = response.code;
+    this.field = response.field;
+  }
+}
+
 export async function apiFetch<T>(
   path: string,
   options: RequestInit = {},
@@ -22,7 +44,10 @@ export async function apiFetch<T>(
   });
 
   if (!response.ok) {
-    throw new Error(`API 요청 실패: ${response.status}`);
+    const errorResponse =
+      (await response.json()) as ApiErrorResponse;
+
+    throw new ApiError(errorResponse);
   }
 
   if (response.status === 204) {

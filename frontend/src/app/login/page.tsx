@@ -67,6 +67,13 @@ export default function LoginPage() {
           {isLoading ? "로그인 중..." : "로그인"}
         </button>
       </form>
+
+      <button
+        type="button"
+        onClick={() => router.push("/signup")}
+      >
+        회원가입
+      </button>
     </main>
   );
 }
