@@ -1,7 +1,10 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
+import { useAuthGuard } from "@/hooks/useAuthGuard";
+import { logout } from "@/lib/auth";
 import { createEvent } from "@/lib/event";
 import {
   createNote,
@@ -15,6 +18,9 @@ import type { NoteResponse } from "@/types/note";
 import type { ScheduleCandidate } from "@/types/schedule";
 
 export default function NotesPage() {
+  const router = useRouter();
+  const isAuthenticated = useAuthGuard();
+
   const [content, setContent] = useState("");
   const [notes, setNotes] = useState<NoteResponse[]>([]);
 
@@ -37,6 +43,11 @@ export default function NotesPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [errorMessage, setErrorMessage] = useState("");
+
+  const handleLogout = () => {
+    logout();
+    router.replace("/login");
+  };
 
   const loadNotes = async () => {
     try {
@@ -223,9 +234,17 @@ export default function NotesPage() {
     }
   };
 
+  if (!isAuthenticated) {
+    return <p>인증 확인 중...</p>;
+  }
+
   return (
     <main>
       <h1>Notes</h1>
+
+      <button type="button" onClick={handleLogout}>
+        로그아웃
+      </button>
 
       <form onSubmit={handleCreate}>
         <textarea

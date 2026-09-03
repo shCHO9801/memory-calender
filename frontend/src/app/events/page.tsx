@@ -1,7 +1,10 @@
 "use client";
 
 import { FormEvent, useState } from "react";
+import { useRouter } from "next/navigation";
 
+import { useAuthGuard } from "@/hooks/useAuthGuard";
+import { logout } from "@/lib/auth";
 import {
   deleteEvent,
   getEvents,
@@ -14,6 +17,9 @@ import type {
 } from "@/types/event";
 
 export default function EventsPage() {
+  const router = useRouter();
+  const isAuthenticated = useAuthGuard();
+
   const [startAt, setStartAt] = useState("2026-09-01T00:00");
   const [endAt, setEndAt] = useState("2026-09-30T23:59");
 
@@ -26,6 +32,11 @@ export default function EventsPage() {
 
   const [editingEvent, setEditingEvent] =
     useState<UpdateEventRequest | null>(null);
+
+  const handleLogout = () => {
+    logout();
+    router.replace("/login");
+  };
 
   const loadEvents = async () => {
     try {
@@ -98,9 +109,17 @@ export default function EventsPage() {
     }
   };
 
+  if (!isAuthenticated) {
+    return <p>인증 확인 중...</p>;
+  }
+
   return (
     <main>
       <h1>Events</h1>
+
+      <button type="button" onClick={handleLogout}>
+        로그아웃
+      </button>
 
       <form onSubmit={handleSearch}>
         <div>
