@@ -1,0 +1,68 @@
+package com.memorycalendar.libs.exception;
+
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+
+@Getter
+@RequiredArgsConstructor
+public enum ErrorCode {
+    /* 400 BAD_REQUEST */
+    /* 400 BAD_REQUEST */
+    INVALID_EVENT_TIME(
+            HttpStatus.BAD_REQUEST,
+            "EVENT_001",
+            "일정 종료 시간은 시작 시간보다 빠를 수 없습니다."
+    ),
+
+    /* 401 UNAUTHORIZED */
+    INVALID_CREDENTIALS(
+            HttpStatus.UNAUTHORIZED,
+            "AUTH_001",
+            "이메일 또는 비밀번호가 올바르지 않습니다."
+    ),
+
+    /* 403 FORBIDDEN */
+
+    /* 404 NOT_FOUND */
+    USER_NOT_FOUND(
+            HttpStatus.NOT_FOUND,
+            "USER_001",
+            "유저를 찾을 수 없습니다."
+    ),
+
+    NOTE_NOT_FOUND(
+            HttpStatus.NOT_FOUND,
+            "NOTE_001",
+            "노트를 찾을 수 없습니다."),
+
+    EVENT_NOT_FOUND(
+            HttpStatus.NOT_FOUND,
+            "EVENT_002",
+            "일정를 찾을 수 없습니다."),
+
+    /* 409 Conflict*/
+    DUPLICATE_EMAIL(
+            HttpStatus.CONFLICT,
+            "USER_002",
+            "이미 사용 중인 이메일입니다."
+    ),
+
+    /* 500 INTERNAL_SERVER_ERROR */
+    INTERNAL_SERVER_ERROR(
+            HttpStatus.INTERNAL_SERVER_ERROR,
+            "COMMON_500",
+            "서버 오류가 발생했습니다."
+    ),
+
+    /* 502 BAD_GATEWAY */
+    AI_API_ERROR(
+            HttpStatus.BAD_GATEWAY,
+            "AI_001",
+            "AI 일정 추출 중 오류가 발생했습니다."
+    );
+
+    private final HttpStatus httpStatus;
+    private final String code;
+    private final String message;
+}

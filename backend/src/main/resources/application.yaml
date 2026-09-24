@@ -1,3 +1,33 @@
 spring:
   application:
     name: backend
+
+  config:
+    import: optional:file:../.env[.properties]
+
+  datasource:
+    url: ${SPRING_DATASOURCE_URL}
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+
+  flyway:
+    enabled: true
+
+  ai:
+    google:
+      genai:
+        api-key: ${GEMINI_API_KEY}
+        chat:
+          model: gemini-3.5-flash-lite
+
+jwt:
+  secret: ${JWT_SECRET}
+  access-token-expiration: 3600
+
+app:
+  frontend-url: ${APP_FRONTEND_URL}
