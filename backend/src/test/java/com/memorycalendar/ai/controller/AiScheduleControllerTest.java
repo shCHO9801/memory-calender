@@ -1,9 +1,11 @@
 package com.memorycalendar.ai.controller;
 
 import com.memorycalendar.ai.client.GeminiClient;
+import com.memorycalendar.event.repository.EventRepository;
 import com.memorycalendar.libs.exception.CustomException;
 import com.memorycalendar.note.entity.Note;
 import com.memorycalendar.note.repository.NoteRepository;
+import com.memorycalendar.todo.repository.TodoRepository;
 import com.memorycalendar.user.entity.User;
 import com.memorycalendar.user.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -39,6 +41,12 @@ class AiScheduleControllerTest {
     NoteRepository noteRepository;
 
     @Autowired
+    TodoRepository todoRepository;
+
+    @Autowired
+    EventRepository eventRepository;
+
+    @Autowired
     PasswordEncoder passwordEncoder;
 
     @MockitoBean
@@ -50,6 +58,8 @@ class AiScheduleControllerTest {
     @BeforeEach
     void setUp() throws Exception {
 
+        todoRepository.deleteAll();
+        eventRepository.deleteAll();
         noteRepository.deleteAll();
         userRepository.deleteAll();
 
