@@ -52,7 +52,8 @@ public class EventService {
                 requestDto.description(),
                 requestDto.startAt(),
                 requestDto.endAt(),
-                requestDto.allDay()
+                requestDto.allDay(),
+                requestDto.location()
         );
 
         return eventRepository.save(newEvent);
@@ -95,7 +96,8 @@ public class EventService {
                 requestDto.description(),
                 requestDto.startAt(),
                 requestDto.endAt(),
-                requestDto.allDay()
+                requestDto.allDay(),
+                requestDto.location()
         );
 
         return event;
