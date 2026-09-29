@@ -57,4 +57,22 @@ public class Todo extends BaseEntity {
                 .status(TODO)
                 .build();
     }
+
+    public void updateContent(String content) {
+        this.content = content;
+    }
+
+    public void updateDueAt(LocalDateTime dueAt) {
+        this.dueAt = dueAt;
+    }
+
+    public void changeStatus(TodoStatus status) {
+        this.status = status;
+
+        if (this.status == TodoStatus.DONE) {
+            this.completedAt = LocalDateTime.now();
+        } else {
+            this.completedAt = null;
+        }
+    }
 }

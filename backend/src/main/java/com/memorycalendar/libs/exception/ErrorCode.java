@@ -41,6 +41,11 @@ public enum ErrorCode {
             "EVENT_002",
             "일정를 찾을 수 없습니다."),
 
+    TODO_NOT_FOUND(
+            HttpStatus.NOT_FOUND,
+            "TODO_001",
+            "Todo를 찾을 수 없습니다."),
+
     /* 409 Conflict*/
     DUPLICATE_EMAIL(
             HttpStatus.CONFLICT,
