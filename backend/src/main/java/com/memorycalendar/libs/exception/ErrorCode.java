@@ -64,7 +64,7 @@ public enum ErrorCode {
     AI_API_ERROR(
             HttpStatus.BAD_GATEWAY,
             "AI_001",
-            "AI 일정 추출 중 오류가 발생했습니다."
+            "AI 분류 중 오류가 발생했습니다."
     );
 
     private final HttpStatus httpStatus;

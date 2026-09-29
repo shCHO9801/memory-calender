@@ -29,7 +29,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         "jwt.access-token-expiration=3600"
 })
 @AutoConfigureMockMvc
-class AiScheduleControllerTest {
+class AiClassificationControllerTest {
 
     @Autowired
     MockMvc mockMvc;
@@ -74,7 +74,7 @@ class AiScheduleControllerTest {
         note = noteRepository.save(
                 Note.of(
                         user,
-                        "8월 30일 오후 3시에 치과 예약이 있어"
+                        "내일 오후 3시에 병원 가고 금요일까지 보험 서류 보내기"
                 )
         );
 
@@ -82,14 +82,14 @@ class AiScheduleControllerTest {
     }
 
     @Test
-    void aiScheduleExtractionFailsWhenApiCallFails() throws Exception {
+    void aiClassificationFailsWhenApiCallFails() throws Exception {
         // given
-        given(geminiClient.extractSchedule(anyString()))
+        given(geminiClient.classify(anyString()))
                 .willThrow(new CustomException(AI_API_ERROR));
 
         // when & then
         mockMvc.perform(
-                        post("/api/notes/{noteId}/schedule-extraction", note.getId())
+                        post("/api/notes/{noteId}/classification", note.getId())
                                 .header(
                                         "Authorization",
                                         "Bearer " + accessToken
@@ -99,7 +99,7 @@ class AiScheduleControllerTest {
                 .andExpect(jsonPath("$.status").value(502))
                 .andExpect(jsonPath("$.code").value("AI_001"))
                 .andExpect(jsonPath("$.message")
-                        .value("AI 일정 추출 중 오류가 발생했습니다."));
+                        .value("AI 분류 중 오류가 발생했습니다."));
     }
 
     private String loginAndGetAccessToken() throws Exception {
@@ -119,7 +119,6 @@ class AiScheduleControllerTest {
                 .getResponse()
                 .getContentAsString();
 
-        // 간단하게 Jackson 으로 accessToken 추출
         com.fasterxml.jackson.databind.ObjectMapper objectMapper =
                 new com.fasterxml.jackson.databind.ObjectMapper();
 

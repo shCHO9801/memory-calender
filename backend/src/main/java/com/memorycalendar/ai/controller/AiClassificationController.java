@@ -1,7 +1,7 @@
 package com.memorycalendar.ai.controller;
 
-import com.memorycalendar.ai.dto.ExtractScheduleResponseDto;
-import com.memorycalendar.ai.service.AiScheduleService;
+import com.memorycalendar.ai.dto.AiClassificationResultDto;
+import com.memorycalendar.ai.service.AiClassificationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -13,19 +13,19 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/notes")
 @RequiredArgsConstructor
-public class AiScheduleController {
+public class AiClassificationController {
 
-    private final AiScheduleService aiScheduleService;
+    private final AiClassificationService aiClassificationService;
 
-    @PostMapping("/{noteId}/schedule-extraction")
-    public ResponseEntity<ExtractScheduleResponseDto> extractSchedule(
+    @PostMapping("/{noteId}/classification")
+    public ResponseEntity<AiClassificationResultDto> classify(
             Authentication authentication,
             @PathVariable Long noteId
     ) {
-
         Long userId = Long.valueOf(authentication.getName());
 
-        ExtractScheduleResponseDto response = aiScheduleService.extractSchedule(userId, noteId);
+        AiClassificationResultDto response =
+                aiClassificationService.classify(userId, noteId);
 
         return ResponseEntity.ok(response);
     }
