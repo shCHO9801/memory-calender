@@ -44,6 +44,9 @@ public class Event extends BaseEntity {
     @Column(name = "all_day", nullable = false)
     private boolean allDay;
 
+    @Column
+    private String location;
+
     public static Event of(
             User user,
             Note note,
@@ -51,7 +54,8 @@ public class Event extends BaseEntity {
             String description,
             LocalDateTime startAt,
             LocalDateTime endAt,
-            boolean allDay
+            boolean allDay,
+            String location
     ) {
         return Event.builder()
                 .user(user)
@@ -61,6 +65,7 @@ public class Event extends BaseEntity {
                 .startAt(startAt)
                 .endAt(endAt)
                 .allDay(allDay)
+                .location(location)
                 .build();
     }
 
@@ -69,12 +74,14 @@ public class Event extends BaseEntity {
             String description,
             LocalDateTime startAt,
             LocalDateTime endAt,
-            boolean allDay
+            boolean allDay,
+            String location
     ) {
         this.title = title;
         this.description = description;
         this.startAt = startAt;
         this.endAt = endAt;
         this.allDay = allDay;
+        this.location = location;
     }
 }
