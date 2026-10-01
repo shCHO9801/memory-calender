@@ -1,5 +1,6 @@
 package com.memorycalendar.event.service;
 
+import com.memorycalendar.event.dto.CalendarEventSummaryDto;
 import com.memorycalendar.event.dto.CreateEventRequestDto;
 import com.memorycalendar.event.dto.EventResponseDto;
 import com.memorycalendar.event.dto.UpdateEventRequestDto;
@@ -17,6 +18,7 @@ import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 import static com.memorycalendar.libs.exception.ErrorCode.*;
 
@@ -107,5 +109,16 @@ public class EventService {
     public void deleteEvent(Long userId, Long eventId) {
         Event event = getEvent(userId, eventId);
         eventRepository.delete(event);
+    }
+
+    public List<CalendarEventSummaryDto> getCalendarEvents(
+            Long userId,
+            LocalDateTime startAt,
+            LocalDateTime endAt
+    ) {
+        return eventRepository
+                .findCalendarEvents(userId, startAt, endAt)
+                .stream().map(CalendarEventSummaryDto::from)
+                .toList();
     }
 }
