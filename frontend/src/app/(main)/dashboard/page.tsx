@@ -1,10 +1,12 @@
 "use client";
 
 import {useEffect, useState} from "react";
-import FullCalendar from "@fullcalendar/react";
-import dayGridPlugin from "@fullcalendar/daygrid";
-import interactionPlugin from "@fullcalendar/interaction";
+
 import type {DatesSetArg} from "@fullcalendar/core";
+import QuickMemo from "@/components/dashboard/QuickMemo";
+import TodoPanel from "@/components/dashboard/TodoPanel";
+import TodayEventsPanel from "@/components/dashboard/TodayEventsPanel";
+import MonthlyCalendar from "@/components/dashboard/MonthlyCalendar";
 
 import {getAccessToken} from "@/lib/auth-storage";
 
@@ -151,148 +153,19 @@ export default function DashboardPage() {
             </header>
 
             <div className="grid gap-4 lg:grid-cols-[minmax(0,1.7fr)_minmax(340px,1fr)]">
-                <section className="rounded-2xl border border-zinc-200 bg-white p-5">
-                    <h2 className="text-lg font-semibold text-zinc-900">
-                        월간 캘린더
-                    </h2>
-
-                    <div className="mt-3">
-                        <FullCalendar
-                            plugins={[dayGridPlugin, interactionPlugin]}
-                            initialView="dayGridMonth"
-                            locale="ko"
-                            height="auto"
-                            displayEventTime={false}
-                            events={calendarEvents.map((event) => ({
-                                id: String(event.eventId),
-                                title: event.title,
-                                start: event.startAt,
-                                end: event.endAt ?? undefined,
-                                allDay: event.allDay,
-                            }))}
-                            datesSet={handleDatesSet}
-                        />
-                    </div>
-                </section>
+                <MonthlyCalendar
+                    events={calendarEvents}
+                    onDatesSet={handleDatesSet}
+                />
 
                 <div className="space-y-4">
-                    <section className="rounded-2xl border border-zinc-200 bg-white p-5">
-                        <div className="mb-4 flex items-center justify-between">
-                            <h2 className="text-lg font-semibold text-zinc-900">
-                                할 일
-                            </h2>
+                    <TodoPanel todos={dashboard?.activeTodos ?? []}/>
 
-                            <span className="text-sm text-zinc-500">
-                    {dashboard?.activeTodos.length ?? 0}개
-                </span>
-                        </div>
+                    <TodayEventsPanel events={dashboard?.todayEvents ?? []}/>
 
-                        <div className="max-h-56 space-y-3 overflow-y-auto pr-1">
-                            {dashboard?.activeTodos.length === 0 && (
-                                <p className="text-sm text-zinc-500">
-                                    남아있는 할 일이 없습니다.
-                                </p>
-                            )}
-
-                            {dashboard?.activeTodos.map((todo) => (
-                                <div
-                                    key={todo.todoId}
-                                    className="rounded-xl border border-zinc-200 p-3"
-                                >
-                                    <p className="font-medium text-zinc-900">
-                                        {todo.content}
-                                    </p>
-
-                                    {todo.dueAt && (
-                                        <p className="mt-1 text-sm text-zinc-500">
-                                            마감 {formatDateTime(todo.dueAt)}
-                                        </p>
-                                    )}
-                                </div>
-                            ))}
-                        </div>
-                    </section>
-
-                    <section className="rounded-2xl border border-zinc-200 bg-white p-5">
-                        <div className="mb-4 flex items-center justify-between">
-                            <h2 className="text-lg font-semibold text-zinc-900">
-                                오늘 일정
-                            </h2>
-
-                            <span className="text-sm text-zinc-500">
-                    {dashboard?.todayEvents.length ?? 0}개
-                </span>
-                        </div>
-
-                        <div className="max-h-56 space-y-3 overflow-y-auto pr-1">
-                            {dashboard?.todayEvents.length === 0 && (
-                                <p className="text-sm text-zinc-500">
-                                    오늘 예정된 일정이 없습니다.
-                                </p>
-                            )}
-
-                            {dashboard?.todayEvents.map((event) => (
-                                <div
-                                    key={event.eventId}
-                                    className="rounded-xl border border-zinc-200 p-3"
-                                >
-                                    <div className="flex items-start justify-between gap-4">
-                                        <div>
-                                            <p className="font-medium text-zinc-900">
-                                                {event.title}
-                                            </p>
-
-                                            {event.location && (
-                                                <p className="mt-1 text-sm text-zinc-500">
-                                                    {event.location}
-                                                </p>
-                                            )}
-                                        </div>
-
-                                        <p className="text-sm text-zinc-600">
-                                            {formatTime(event.startAt)}
-                                        </p>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </section>
-
-                    <section className="rounded-2xl border border-zinc-200 bg-white p-5">
-                        <h2 className="text-lg font-semibold text-zinc-900">
-                            빠른 메모
-                        </h2>
-
-                        <textarea
-                            placeholder="일정이나 할 일을 자유롭게 입력하세요."
-                            className="mt-3 min-h-24 w-full resize-none rounded-xl border border-zinc-300 p-3 text-sm outline-none focus:border-zinc-500"
-                        />
-
-                        <button
-                            type="button"
-                            className="mt-3 rounded-lg bg-zinc-900 px-4 py-2.5 text-sm font-medium text-white hover:bg-zinc-800"
-                        >
-                            메모 작성
-                        </button>
-                    </section>
+                    <QuickMemo/>
                 </div>
             </div>
         </div>
     );
-}
-
-function formatTime(value: string) {
-    return new Intl.DateTimeFormat("ko-KR", {
-        hour: "2-digit",
-        minute: "2-digit",
-    }).format(new Date(value));
-}
-
-function formatDateTime(value: string) {
-    return new Intl.DateTimeFormat("ko-KR", {
-        month: "short",
-        day: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-    }).format(new Date(value));
 }
