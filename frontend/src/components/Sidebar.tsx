@@ -8,8 +8,8 @@ const menus = [
         path: "/dashboard",
     },
     {
-        label: "Calendar",
-        path: "/calendar",
+        label: "Event",
+        path: "/events",
     },
     {
         label: "Todo",
