@@ -1,7 +1,7 @@
 services:
   postgres:
     image: postgres:17
-    container_name: memory-calendar-postgres
+    container_name: memory-events-postgres
     environment:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
@@ -12,7 +12,7 @@ services:
   backend:
     build:
       context: ./backend
-    container_name: memory-calendar-backend
+    container_name: memory-events-backend
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB}
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
@@ -30,7 +30,7 @@ services:
       context: ./frontend
       args:
         NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL}
-    container_name: memory-calendar-frontend
+    container_name: memory-events-frontend
     ports:
       - "127.0.0.1:3060:3000"
     depends_on:
