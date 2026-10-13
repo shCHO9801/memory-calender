@@ -1,23 +1,35 @@
 "use client";
 
-import {FormEvent, useEffect, useState} from "react";
-import {useRouter} from "next/navigation";
+import {
+    FormEvent,
+    useEffect,
+    useState,
+} from "react";
 
-import {useAuthGuard} from "@/hooks/useAuthGuard";
-import {logout} from "@/lib/auth";
-import {createEvent} from "@/lib/events-api";
-import {createNote, deleteNote, getNotes, updateNote,} from "@/lib/note";
-import {extractSchedule} from "@/lib/schedule";
+import NoteCreateForm from "@/components/notes/NoteCreateForm";
+import NoteList from "@/components/notes/NoteList";
+
+import {
+    createNote,
+    deleteNote,
+    getNotes,
+    updateNote,
+} from "@/lib/note";
+
+import {
+    confirmClassification,
+    extractSchedule,
+} from "@/lib/schedule";
 
 import type {NoteResponse} from "@/types/note";
-import type {ScheduleCandidate} from "@/types/schedule";
+import type {
+    ClassificationItem,
+} from "@/types/schedule";
 
 export default function NotesPage() {
-    const router = useRouter();
-    const isAuthenticated = useAuthGuard();
-
     const [content, setContent] = useState("");
-    const [notes, setNotes] = useState<NoteResponse[]>([]);
+    const [notes, setNotes] =
+        useState<NoteResponse[]>([]);
 
     const [editingNoteId, setEditingNoteId] =
         useState<number | null>(null);
@@ -25,37 +37,42 @@ export default function NotesPage() {
     const [editingContent, setEditingContent] =
         useState("");
 
-    const [scheduleCandidates, setScheduleCandidates] =
-        useState<Record<number, ScheduleCandidate[]>>({});
+    const [
+        scheduleCandidates,
+        setScheduleCandidates,
+    ] = useState<
+        Record<number, ClassificationItem[]>
+    >({});
 
-    const [registeredCandidates, setRegisteredCandidates] =
-        useState<Record<string, boolean>>({});
+    const [
+        registeredCandidates,
+        setRegisteredCandidates,
+    ] = useState<Record<string, boolean>>({});
 
-    const [extractingNoteId, setExtractingNoteId] =
-        useState<number | null>(null);
+    const [
+        extractingNoteId,
+        setExtractingNoteId,
+    ] = useState<number | null>(null);
 
-    const [isLoading, setIsLoading] = useState(true);
-    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isLoading, setIsLoading] =
+        useState(true);
 
-    const [errorMessage, setErrorMessage] = useState("");
+    const [isSubmitting, setIsSubmitting] =
+        useState(false);
 
-    const handleLogout = () => {
-        logout();
-        router.replace("/login");
-    };
+    const [errorMessage, setErrorMessage] =
+        useState("");
 
     const loadNotes = async () => {
         try {
-            setIsLoading(true);
-            setErrorMessage("");
-
             const response = await getNotes();
 
             setNotes(response.content);
+            setErrorMessage("");
         } catch {
-            setErrorMessage("노트 목록을 불러오지 못했습니다.");
-        } finally {
-            setIsLoading(false);
+            setErrorMessage(
+                "노트 목록을 불러오지 못했습니다."
+            );
         }
     };
 
@@ -66,17 +83,19 @@ export default function NotesPage() {
 
                 setNotes(response.content);
             } catch {
-                setErrorMessage("노트 목록을 불러오지 못했습니다.");
+                setErrorMessage(
+                    "노트 목록을 불러오지 못했습니다."
+                );
             } finally {
                 setIsLoading(false);
             }
         };
 
-        fetchNotes();
+        void fetchNotes();
     }, []);
 
     const handleCreate = async (
-        event: FormEvent<HTMLFormElement>,
+        event: FormEvent<HTMLFormElement>
     ) => {
         event.preventDefault();
 
@@ -89,20 +108,24 @@ export default function NotesPage() {
             setErrorMessage("");
 
             await createNote({
-                content,
+                content: content.trim(),
             });
 
             setContent("");
 
             await loadNotes();
         } catch {
-            setErrorMessage("노트 작성에 실패했습니다.");
+            setErrorMessage(
+                "노트 작성에 실패했습니다."
+            );
         } finally {
             setIsSubmitting(false);
         }
     };
 
-    const handleEditStart = (note: NoteResponse) => {
+    const handleEditStart = (
+        note: NoteResponse
+    ) => {
         setEditingNoteId(note.noteId);
         setEditingContent(note.content);
     };
@@ -112,7 +135,9 @@ export default function NotesPage() {
         setEditingContent("");
     };
 
-    const handleUpdate = async (noteId: number) => {
+    const handleUpdate = async (
+        noteId: number
+    ) => {
         if (!editingContent.trim()) {
             return;
         }
@@ -121,7 +146,7 @@ export default function NotesPage() {
             setErrorMessage("");
 
             await updateNote(noteId, {
-                content: editingContent,
+                content: editingContent.trim(),
             });
 
             setEditingNoteId(null);
@@ -129,11 +154,24 @@ export default function NotesPage() {
 
             await loadNotes();
         } catch {
-            setErrorMessage("노트 수정에 실패했습니다.");
+            setErrorMessage(
+                "노트 수정에 실패했습니다."
+            );
         }
     };
 
-    const handleDelete = async (noteId: number) => {
+    const handleDelete = async (
+        noteId: number
+    ) => {
+        const confirmed =
+            window.confirm(
+                "이 노트를 삭제하시겠습니까?"
+            );
+
+        if (!confirmed) {
+            return;
+        }
+
         try {
             setErrorMessage("");
 
@@ -149,23 +187,30 @@ export default function NotesPage() {
 
             await loadNotes();
         } catch {
-            setErrorMessage("노트 삭제에 실패했습니다.");
+            setErrorMessage(
+                "노트 삭제에 실패했습니다."
+            );
         }
     };
 
-    const handleExtractSchedule = async (noteId: number) => {
+    const handleExtractSchedule = async (
+        noteId: number
+    ) => {
         try {
             setExtractingNoteId(noteId);
             setErrorMessage("");
 
-            const response = await extractSchedule(noteId);
+            const response =
+                await extractSchedule(noteId);
 
             setScheduleCandidates((prev) => ({
                 ...prev,
-                [noteId]: response.candidates,
+                [noteId]: response.items,
             }));
         } catch {
-            setErrorMessage("일정 추출에 실패했습니다.");
+            setErrorMessage(
+                "일정 추출에 실패했습니다."
+            );
         } finally {
             setExtractingNoteId(null);
         }
@@ -174,11 +219,13 @@ export default function NotesPage() {
     const handleCandidateChange = (
         noteId: number,
         index: number,
-        field: keyof ScheduleCandidate,
-        value: string | boolean | null,
+        field: keyof ClassificationItem,
+        value: string | null,
     ) => {
         setScheduleCandidates((prev) => {
-            const candidates = [...(prev[noteId] ?? [])];
+            const candidates = [
+                ...(prev[noteId] ?? []),
+            ];
 
             candidates[index] = {
                 ...candidates[index],
@@ -192,15 +239,12 @@ export default function NotesPage() {
         });
     };
 
-    const getCandidateKey = (noteId: number, index: number) =>
-        `${noteId}-${index}`;
-
-    const handleCreateEvent = async (
+    const handleConfirmCandidate = async (
         noteId: number,
         index: number,
-        candidate: ScheduleCandidate,
+        candidate: ClassificationItem,
     ) => {
-        const key = getCandidateKey(noteId, index);
+        const key = `${noteId}-${index}`;
 
         if (registeredCandidates[key]) {
             return;
@@ -209,339 +253,138 @@ export default function NotesPage() {
         try {
             setErrorMessage("");
 
-            await createEvent({
+            await confirmClassification(
                 noteId,
-                title: candidate.title,
-                description: candidate.description,
-                startAt: candidate.startAt,
-                endAt: candidate.endAt,
-                allDay: candidate.allDay,
-                location: candidate.location,
-            });
+                {
+                    items: [
+                        {
+                            type: candidate.type,
+                            content:
+                                candidate.content.trim(),
+                            startAt:
+                                candidate.type ===
+                                "EVENT"
+                                    ? candidate.startAt
+                                    : null,
+                            endAt:
+                                candidate.type ===
+                                "EVENT"
+                                    ? candidate.endAt
+                                    : null,
+                            dueAt:
+                                candidate.type ===
+                                "TODO"
+                                    ? candidate.dueAt
+                                    : null,
+                            location:
+                                candidate.type ===
+                                "EVENT"
+                                    ? candidate.location
+                                    : null,
+                        },
+                    ],
+                },
+            );
 
-            setRegisteredCandidates((prev) => ({
-                ...prev,
-                [key]: true,
-            }));
-
-            alert("일정이 등록되었습니다.");
+            setRegisteredCandidates(
+                (prev) => ({
+                    ...prev,
+                    [key]: true,
+                }),
+            );
         } catch {
-            setErrorMessage("일정 등록에 실패했습니다.");
+            setErrorMessage(
+                candidate.type === "EVENT"
+                    ? "일정 등록에 실패했습니다."
+                    : "할 일 등록에 실패했습니다.",
+            );
         }
     };
 
-    if (!isAuthenticated) {
-        return <p>인증 확인 중...</p>;
-    }
-
     return (
-        <main>
-            <h1>Notes</h1>
+        <div className="mx-auto max-w-4xl space-y-6">
+            <header>
+                <h1 className="text-2xl font-semibold text-zinc-900">
+                    Notes
+                </h1>
 
-            <button type="button" onClick={handleLogout}>
-                로그아웃
-            </button>
+                <p className="mt-1 text-sm text-zinc-500">
+                    자유롭게 기록하고 AI로 일정을
+                    추출하세요.
+                </p>
+            </header>
 
-            <form onSubmit={handleCreate}>
-        <textarea
-            value={content}
-            onChange={(event) =>
-                setContent(event.target.value)
-            }
-            placeholder="기록을 작성해주세요."
-            rows={5}
-        />
-
-                <button
-                    type="submit"
-                    disabled={isSubmitting}
-                >
-                    {isSubmitting ? "저장 중..." : "저장"}
-                </button>
-            </form>
+            <NoteCreateForm
+                content={content}
+                isSubmitting={isSubmitting}
+                onContentChange={setContent}
+                onSubmit={handleCreate}
+            />
 
             {errorMessage && (
-                <p>{errorMessage}</p>
+                <div className="rounded-xl border border-red-100 bg-red-50 px-4 py-3">
+                    <p className="text-sm text-red-600">
+                        {errorMessage}
+                    </p>
+                </div>
             )}
 
             {isLoading ? (
-                <p>불러오는 중...</p>
+                <div className="flex min-h-40 items-center justify-center">
+                    <p className="text-sm text-zinc-500">
+                        불러오는 중...
+                    </p>
+                </div>
             ) : (
-                <ul>
-                    {notes.map((note) => (
-                        <li key={note.noteId}>
-                            {editingNoteId === note.noteId ? (
-                                <>
-                  <textarea
-                      value={editingContent}
-                      onChange={(event) =>
-                          setEditingContent(
-                              event.target.value,
-                          )
-                      }
-                      rows={3}
-                  />
-
-                                    <button
-                                        type="button"
-                                        onClick={() =>
-                                            handleUpdate(note.noteId)
-                                        }
-                                    >
-                                        저장
-                                    </button>
-
-                                    <button
-                                        type="button"
-                                        onClick={handleEditCancel}
-                                    >
-                                        취소
-                                    </button>
-                                </>
-                            ) : (
-                                <>
-                                    <p>{note.content}</p>
-
-                                    <small>
-                                        {note.createdAt}
-                                    </small>
-
-                                    <div>
-                                        <button
-                                            type="button"
-                                            onClick={() =>
-                                                handleEditStart(note)
-                                            }
-                                        >
-                                            수정
-                                        </button>
-
-                                        <button
-                                            type="button"
-                                            onClick={() =>
-                                                handleDelete(note.noteId)
-                                            }
-                                        >
-                                            삭제
-                                        </button>
-
-                                        <button
-                                            type="button"
-                                            onClick={() =>
-                                                handleExtractSchedule(
-                                                    note.noteId,
-                                                )
-                                            }
-                                            disabled={
-                                                extractingNoteId ===
-                                                note.noteId
-                                            }
-                                        >
-                                            {extractingNoteId ===
-                                            note.noteId
-                                                ? "추출 중..."
-                                                : "일정 추출"}
-                                        </button>
-                                    </div>
-
-                                    {scheduleCandidates[
-                                        note.noteId
-                                        ] && (
-                                        <div>
-                                            {scheduleCandidates[
-                                                note.noteId
-                                                ].length === 0 ? (
-                                                <p>
-                                                    추출된 일정이 없습니다.
-                                                </p>
-                                            ) : (
-                                                scheduleCandidates[
-                                                    note.noteId
-                                                    ].map(
-                                                    (
-                                                        candidate,
-                                                        index,
-                                                    ) => {
-                                                        const candidateKey =
-                                                            getCandidateKey(
-                                                                note.noteId,
-                                                                index,
-                                                            );
-                                                        const isRegistered =
-                                                            registeredCandidates[
-                                                                candidateKey
-                                                                ];
-
-                                                        return (
-                                                            <div key={index}>
-                                                                <div>
-                                                                    <label>
-                                                                        제목
-                                                                    </label>
-
-                                                                    <input
-                                                                        value={
-                                                                            candidate.title
-                                                                        }
-                                                                        onChange={(
-                                                                            event,
-                                                                        ) =>
-                                                                            handleCandidateChange(
-                                                                                note.noteId,
-                                                                                index,
-                                                                                "title",
-                                                                                event
-                                                                                    .target
-                                                                                    .value,
-                                                                            )
-                                                                        }
-                                                                    />
-                                                                </div>
-
-                                                                <div>
-                                                                    <label>
-                                                                        시작 시간
-                                                                    </label>
-
-                                                                    <input
-                                                                        type="datetime-local"
-                                                                        value={
-                                                                            candidate.startAt
-                                                                        }
-                                                                        onChange={(
-                                                                            event,
-                                                                        ) =>
-                                                                            handleCandidateChange(
-                                                                                note.noteId,
-                                                                                index,
-                                                                                "startAt",
-                                                                                event
-                                                                                    .target
-                                                                                    .value,
-                                                                            )
-                                                                        }
-                                                                    />
-                                                                </div>
-
-                                                                <div>
-                                                                    <label>
-                                                                        종료 시간
-                                                                    </label>
-
-                                                                    <input
-                                                                        type="datetime-local"
-                                                                        value={
-                                                                            candidate.endAt ??
-                                                                            ""
-                                                                        }
-                                                                        onChange={(
-                                                                            event,
-                                                                        ) =>
-                                                                            handleCandidateChange(
-                                                                                note.noteId,
-                                                                                index,
-                                                                                "endAt",
-                                                                                event
-                                                                                    .target
-                                                                                    .value ||
-                                                                                null,
-                                                                            )
-                                                                        }
-                                                                    />
-                                                                </div>
-
-                                                                <div>
-                                                                    <label>
-                                                                        설명
-                                                                    </label>
-
-                                                                    <textarea
-                                                                        value={
-                                                                            candidate.description ??
-                                                                            ""
-                                                                        }
-                                                                        onChange={(
-                                                                            event,
-                                                                        ) =>
-                                                                            handleCandidateChange(
-                                                                                note.noteId,
-                                                                                index,
-                                                                                "description",
-                                                                                event
-                                                                                    .target
-                                                                                    .value ||
-                                                                                null,
-                                                                            )
-                                                                        }
-                                                                    />
-                                                                </div>
-
-                                                                <div>
-                                                                    <label>
-                                                                        <input
-                                                                            type="checkbox"
-                                                                            checked={
-                                                                                candidate.allDay
-                                                                            }
-                                                                            onChange={(
-                                                                                event,
-                                                                            ) =>
-                                                                                handleCandidateChange(
-                                                                                    note.noteId,
-                                                                                    index,
-                                                                                    "allDay",
-                                                                                    event
-                                                                                        .target
-                                                                                        .checked,
-                                                                                )
-                                                                            }
-                                                                        />
-
-                                                                        종일 일정
-                                                                    </label>
-                                                                </div>
-
-                                                                <p>
-                                                                    장소:{" "}
-                                                                    {candidate.location ??
-                                                                        "없음"}
-                                                                </p>
-
-                                                                {candidate.needsConfirmation && (
-                                                                    <p>
-                                                                        확인이 필요한
-                                                                        일정입니다.
-                                                                    </p>
-                                                                )}
-
-                                                                <button
-                                                                    type="button"
-                                                                    disabled={isRegistered}
-                                                                    onClick={() =>
-                                                                        handleCreateEvent(
-                                                                            note.noteId,
-                                                                            index,
-                                                                            candidate,
-                                                                        )
-                                                                    }
-                                                                >
-                                                                    {isRegistered
-                                                                        ? "등록 완료"
-                                                                        : "일정 등록"}
-                                                                </button>
-                                                            </div>
-                                                        );
-                                                    },
-                                                )
-                                            )}
-                                        </div>
-                                    )}
-                                </>
-                            )}
-                        </li>
-                    ))}
-                </ul>
+                <NoteList
+                    notes={notes}
+                    editingNoteId={editingNoteId}
+                    editingContent={editingContent}
+                    extractingNoteId={
+                        extractingNoteId
+                    }
+                    scheduleCandidates={
+                        scheduleCandidates
+                    }
+                    registeredCandidates={
+                        registeredCandidates
+                    }
+                    onEditStart={
+                        handleEditStart
+                    }
+                    onEditCancel={
+                        handleEditCancel
+                    }
+                    onEditingContentChange={
+                        setEditingContent
+                    }
+                    onUpdate={(noteId) => {
+                        void handleUpdate(noteId);
+                    }}
+                    onDelete={(noteId) => {
+                        void handleDelete(noteId);
+                    }}
+                    onExtractSchedule={(noteId) => {
+                        void handleExtractSchedule(
+                            noteId
+                        );
+                    }}
+                    onCandidateChange={
+                        handleCandidateChange
+                    }
+                    onRegisterCandidate={(
+                        noteId,
+                        index,
+                        candidate,
+                    ) => {
+                        void handleConfirmCandidate(
+                            noteId,
+                            index,
+                            candidate,
+                        );
+                    }}
+                />
             )}
-        </main>
+        </div>
     );
 }

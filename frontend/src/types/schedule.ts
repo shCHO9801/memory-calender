@@ -1,14 +1,31 @@
-export type ScheduleCandidate = {
-    title: string;
-    startAt: string;
+export type CandidateType =
+    | "EVENT"
+    | "TODO";
+
+export type ClassificationItem = {
+    type: CandidateType;
+    content: string;
+    startAt: string | null;
     endAt: string | null;
-    description: string | null;
+    dueAt: string | null;
     location: string | null;
-    allDay: boolean;
     needsConfirmation: boolean;
 };
 
-export type ScheduleExtractionResponse = {
+export type ClassificationResponse = {
     noteId: number;
-    candidates: ScheduleCandidate[];
+    items: ClassificationItem[];
+};
+
+export type ConfirmClassificationItem = {
+    type: CandidateType;
+    content: string;
+    startAt: string | null;
+    endAt: string | null;
+    dueAt: string | null;
+    location: string | null;
+};
+
+export type ConfirmClassificationRequest = {
+    items: ConfirmClassificationItem[];
 };
