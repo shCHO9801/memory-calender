@@ -5,7 +5,7 @@ import {useRouter} from "next/navigation";
 
 import {useAuthGuard} from "@/hooks/useAuthGuard";
 import {logout} from "@/lib/auth";
-import {createEvent} from "@/lib/event";
+import {createEvent} from "@/lib/events-api";
 import {createNote, deleteNote, getNotes, updateNote,} from "@/lib/note";
 import {extractSchedule} from "@/lib/schedule";
 
@@ -216,6 +216,7 @@ export default function NotesPage() {
                 startAt: candidate.startAt,
                 endAt: candidate.endAt,
                 allDay: candidate.allDay,
+                location: candidate.location,
             });
 
             setRegisteredCandidates((prev) => ({
