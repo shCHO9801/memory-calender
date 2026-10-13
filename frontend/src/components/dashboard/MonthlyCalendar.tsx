@@ -16,11 +16,13 @@ type CalendarEventSummary = {
 type MonthlyCalendarProps = {
     events: CalendarEventSummary[];
     onDatesSet: (info: DatesSetArg) => void;
+    onEventClick: (eventId: number) => void;
 };
 
 export default function MonthlyCalendar({
                                             events,
                                             onDatesSet,
+                                            onEventClick,
                                         }: MonthlyCalendarProps) {
     return (
         <section className="rounded-2xl border border-zinc-200 bg-white p-5">
@@ -43,6 +45,9 @@ export default function MonthlyCalendar({
                         allDay: event.allDay,
                     }))}
                     datesSet={onDatesSet}
+                    eventClick={(info) => {
+                        onEventClick(Number(info.event.id));
+                    }}
                 />
             </div>
         </section>

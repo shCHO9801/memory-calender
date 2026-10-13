@@ -1,14 +1,16 @@
 "use client";
 
 import {useEffect, useState} from "react";
-
 import type {DatesSetArg} from "@fullcalendar/core";
+
 import QuickMemo from "@/components/dashboard/QuickMemo";
 import TodoPanel from "@/components/dashboard/TodoPanel";
 import TodayEventsPanel from "@/components/dashboard/TodayEventsPanel";
 import MonthlyCalendar from "@/components/dashboard/MonthlyCalendar";
+import DashboardEventDetailModal from "@/components/dashboard/DashboardEventDetailModal";
 
 import {getAccessToken} from "@/lib/auth-storage";
+import {getEvent, type EventDetail} from "@/lib/events-api";
 
 type EventResponse = {
     eventId: number;
@@ -42,8 +44,15 @@ type CalendarEventSummary = {
 };
 
 export default function DashboardPage() {
-    const [dashboard, setDashboard] = useState<DashboardResponse | null>(null);
-    const [calendarEvents, setCalendarEvents] = useState<CalendarEventSummary[]>([]);
+    const [dashboard, setDashboard] =
+        useState<DashboardResponse | null>(null);
+
+    const [calendarEvents, setCalendarEvents] =
+        useState<CalendarEventSummary[]>([]);
+
+    const [selectedEvent, setSelectedEvent] =
+        useState<EventDetail | null>(null);
+
     const [isLoading, setIsLoading] = useState(true);
     const [errorMessage, setErrorMessage] = useState("");
 
@@ -71,17 +80,20 @@ export default function DashboardPage() {
                     throw new Error();
                 }
 
-                const data: DashboardResponse = await response.json();
+                const data: DashboardResponse =
+                    await response.json();
 
                 setDashboard(data);
             } catch {
-                setErrorMessage("대시보드 정보를 불러오지 못했습니다.");
+                setErrorMessage(
+                    "대시보드 정보를 불러오지 못했습니다."
+                );
             } finally {
                 setIsLoading(false);
             }
         };
 
-        fetchDashboard();
+        void fetchDashboard();
     }, []);
 
     const fetchCalendarEvents = async (
@@ -94,27 +106,34 @@ export default function DashboardPage() {
             return;
         }
 
-        const params = new URLSearchParams({
-            startAt,
-            endAt,
-        });
+        try {
+            const params = new URLSearchParams({
+                startAt,
+                endAt,
+            });
 
-        const response = await fetch(
-            `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/events/calendar?${params}`,
-            {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
+            const response = await fetch(
+                `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/events/calendar?${params}`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                }
+            );
+
+            if (!response.ok) {
+                throw new Error();
             }
-        );
 
-        if (!response.ok) {
-            throw new Error("캘린더 일정 조회에 실패했습니다.");
+            const data: CalendarEventSummary[] =
+                await response.json();
+
+            setCalendarEvents(data);
+        } catch {
+            setErrorMessage(
+                "캘린더 일정을 불러오지 못했습니다."
+            );
         }
-
-        const data: CalendarEventSummary[] = await response.json();
-
-        setCalendarEvents(data);
     };
 
     const handleDatesSet = (info: DatesSetArg) => {
@@ -124,10 +143,26 @@ export default function DashboardPage() {
         );
     };
 
+    const handleEventClick = async (eventId: number) => {
+        try {
+            setErrorMessage("");
+
+            const event = await getEvent(eventId);
+
+            setSelectedEvent(event);
+        } catch {
+            setErrorMessage(
+                "일정 상세 정보를 불러오지 못했습니다."
+            );
+        }
+    };
+
     if (isLoading) {
         return (
             <main className="flex min-h-screen items-center justify-center">
-                <p className="text-sm text-zinc-500">불러오는 중...</p>
+                <p className="text-sm text-zinc-500">
+                    불러오는 중...
+                </p>
             </main>
         );
     }
@@ -135,37 +170,55 @@ export default function DashboardPage() {
     if (errorMessage) {
         return (
             <main className="flex min-h-screen items-center justify-center">
-                <p className="text-sm text-red-500">{errorMessage}</p>
+                <p className="text-sm text-red-500">
+                    {errorMessage}
+                </p>
             </main>
         );
     }
 
     return (
-        <div className="mx-auto max-w-7xl space-y-6">
-            <header>
-                <h1 className="text-2xl font-semibold text-zinc-900">
-                    Memory Calendar
-                </h1>
+        <>
+            <div className="mx-auto max-w-7xl space-y-6">
+                <header>
+                    <h1 className="text-2xl font-semibold text-zinc-900">
+                        Memory Calendar
+                    </h1>
 
-                <p className="mt-1 text-sm text-zinc-500">
-                    오늘 일정과 할 일을 확인하세요.
-                </p>
-            </header>
+                    <p className="mt-1 text-sm text-zinc-500">
+                        오늘 일정과 할 일을 확인하세요.
+                    </p>
+                </header>
 
-            <div className="grid gap-4 lg:grid-cols-[minmax(0,1.7fr)_minmax(340px,1fr)]">
-                <MonthlyCalendar
-                    events={calendarEvents}
-                    onDatesSet={handleDatesSet}
-                />
+                <div className="grid gap-4 lg:grid-cols-[minmax(0,1.7fr)_minmax(340px,1fr)]">
+                    <MonthlyCalendar
+                        events={calendarEvents}
+                        onDatesSet={handleDatesSet}
+                        onEventClick={(eventId) => {
+                            void handleEventClick(eventId);
+                        }}
+                    />
 
-                <div className="space-y-4">
-                    <TodoPanel todos={dashboard?.activeTodos ?? []}/>
+                    <div className="space-y-4">
+                        <TodoPanel
+                            todos={dashboard?.activeTodos ?? []}
+                        />
 
-                    <TodayEventsPanel events={dashboard?.todayEvents ?? []}/>
+                        <TodayEventsPanel
+                            events={dashboard?.todayEvents ?? []}
+                        />
 
-                    <QuickMemo/>
+                        <QuickMemo />
+                    </div>
                 </div>
             </div>
-        </div>
+
+            {selectedEvent && (
+                <DashboardEventDetailModal
+                    event={selectedEvent}
+                    onClose={() => setSelectedEvent(null)}
+                />
+            )}
+        </>
     );
 }
