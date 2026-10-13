@@ -9,8 +9,13 @@ import TodayEventsPanel from "@/components/dashboard/TodayEventsPanel";
 import MonthlyCalendar from "@/components/dashboard/MonthlyCalendar";
 import DashboardEventDetailModal from "@/components/dashboard/DashboardEventDetailModal";
 
-import {getAccessToken} from "@/lib/auth-storage";
-import {getEvent, type EventDetail} from "@/lib/events-api";
+import {apiFetch} from "@/lib/api";
+import {
+    getEvent,
+    getEvents,
+    type EventDetail,
+    type EventSummary,
+} from "@/lib/events-api";
 
 type EventResponse = {
     eventId: number;
@@ -35,20 +40,12 @@ type DashboardResponse = {
     activeTodos: TodoResponse[];
 };
 
-type CalendarEventSummary = {
-    eventId: number;
-    title: string;
-    startAt: string;
-    endAt: string | null;
-    allDay: boolean;
-};
-
 export default function DashboardPage() {
     const [dashboard, setDashboard] =
         useState<DashboardResponse | null>(null);
 
     const [calendarEvents, setCalendarEvents] =
-        useState<CalendarEventSummary[]>([]);
+        useState<EventSummary[]>([]);
 
     const [selectedEvent, setSelectedEvent] =
         useState<EventDetail | null>(null);
@@ -58,36 +55,15 @@ export default function DashboardPage() {
 
     useEffect(() => {
         const fetchDashboard = async () => {
-            const token = getAccessToken();
-
-            if (!token) {
-                setErrorMessage("로그인이 필요합니다.");
-                setIsLoading(false);
-                return;
-            }
-
             try {
-                const response = await fetch(
-                    `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/dashboard`,
-                    {
-                        headers: {
-                            Authorization: `Bearer ${token}`,
-                        },
-                    }
+                const data = await apiFetch<DashboardResponse>(
+                    "/api/dashboard"
                 );
-
-                if (!response.ok) {
-                    throw new Error();
-                }
-
-                const data: DashboardResponse =
-                    await response.json();
 
                 setDashboard(data);
-            } catch {
-                setErrorMessage(
-                    "대시보드 정보를 불러오지 못했습니다."
-                );
+                setErrorMessage("");
+            } catch (error) {
+                setErrorMessage(getErrorMessage(error));
             } finally {
                 setIsLoading(false);
             }
@@ -100,39 +76,16 @@ export default function DashboardPage() {
         startAt: string,
         endAt: string
     ) => {
-        const token = getAccessToken();
-
-        if (!token) {
-            return;
-        }
-
         try {
-            const params = new URLSearchParams({
+            const data = await getEvents(
                 startAt,
-                endAt,
-            });
-
-            const response = await fetch(
-                `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/events/calendar?${params}`,
-                {
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                    },
-                }
+                endAt
             );
-
-            if (!response.ok) {
-                throw new Error();
-            }
-
-            const data: CalendarEventSummary[] =
-                await response.json();
 
             setCalendarEvents(data);
-        } catch {
-            setErrorMessage(
-                "캘린더 일정을 불러오지 못했습니다."
-            );
+            setErrorMessage("");
+        } catch (error) {
+            setErrorMessage(getErrorMessage(error));
         }
     };
 
@@ -145,15 +98,12 @@ export default function DashboardPage() {
 
     const handleEventClick = async (eventId: number) => {
         try {
-            setErrorMessage("");
-
             const event = await getEvent(eventId);
 
             setSelectedEvent(event);
-        } catch {
-            setErrorMessage(
-                "일정 상세 정보를 불러오지 못했습니다."
-            );
+            setErrorMessage("");
+        } catch (error) {
+            setErrorMessage(getErrorMessage(error));
         }
     };
 
@@ -221,4 +171,12 @@ export default function DashboardPage() {
             )}
         </>
     );
+}
+
+function getErrorMessage(error: unknown) {
+    if (error instanceof Error) {
+        return error.message;
+    }
+
+    return "요청 처리에 실패했습니다.";
 }

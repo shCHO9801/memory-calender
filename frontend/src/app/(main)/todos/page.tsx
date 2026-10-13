@@ -2,213 +2,146 @@
 
 import {useEffect, useState} from "react";
 
-import {getAccessToken} from "@/lib/auth-storage";
 import TodoFilter from "@/components/todo/TodoFilter";
 import TodoCreateForm from "@/components/todo/TodoCreateForm";
 import TodoList from "@/components/todo/TodoList";
 
-type TodoResponse = {
-    todoId: number;
-    content: string;
-    dueAt: string | null;
-    status: "TODO" | "IN_PROGRESS" | "DONE";
-    completedAt: string | null;
-};
-
-type TodoPageResponse = {
-    content: TodoResponse[];
-    page: number;
-    size: number;
-    hasNext: boolean;
-};
+import {
+    createTodo,
+    deleteTodo,
+    getTodos,
+    updateTodo,
+    updateTodoStatus,
+    type TodoResponse,
+} from "@/lib/todos-api";
 
 export default function TodosPage() {
     const [todos, setTodos] = useState<TodoResponse[]>([]);
+
     const [statusFilter, setStatusFilter] = useState<
         "TODO" | "DONE"
     >("TODO");
+
     const [isLoading, setIsLoading] = useState(true);
     const [errorMessage, setErrorMessage] = useState("");
 
-    const createTodo = async (
-        content: string,
-        dueAt: string | null
-    ) => {
-        const token = getAccessToken();
-
-        if (!token) {
-            throw new Error("로그인이 필요합니다.");
-        }
-
-        const response = await fetch(
-            `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/todos`,
-            {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${token}`,
-                },
-                body: JSON.stringify({
-                    noteId: null,
-                    content,
-                    dueAt,
-                }),
-            }
-        );
-
-        if (!response.ok) {
-            throw new Error("할 일 생성에 실패했습니다.");
-        }
-
-        const createdTodo: TodoResponse = await response.json();
-
-        setTodos((prev) => [createdTodo, ...prev]);
-    };
-
-    const toggleTodoDone = async (
-        todoId: number,
-        isDone: boolean
-    ) => {
-        const token = getAccessToken();
-
-        if (!token) {
-            throw new Error("로그인이 필요합니다.");
-        }
-
-        const nextStatus = isDone ? "TODO" : "DONE";
-
-        const response = await fetch(
-            `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/todos/${todoId}/status`,
-            {
-                method: "PATCH",
-                headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${token}`,
-                },
-                body: JSON.stringify({
-                    status: nextStatus,
-                }),
-            }
-        );
-
-        if (!response.ok) {
-            throw new Error("할 일 상태 변경에 실패했습니다.");
-        }
-
-        const updatedTodo: TodoResponse = await response.json();
-
-        setTodos((prev) =>
-            prev.map((todo) =>
-                todo.todoId === updatedTodo.todoId
-                    ? updatedTodo
-                    : todo
-            )
-        );
-    };
-
-    const deleteTodo = async (todoId: number) => {
-        const token = getAccessToken();
-
-        if (!token) {
-            throw new Error("로그인이 필요합니다.");
-        }
-
-        const response = await fetch(
-            `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/todos/${todoId}`,
-            {
-                method: "DELETE",
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
-            }
-        );
-
-        if (!response.ok) {
-            throw new Error("할 일 삭제에 실패했습니다.");
-        }
-
-        setTodos((prev) =>
-            prev.filter((todo) => todo.todoId !== todoId)
-        );
-    };
-
-    const updateTodo = async (
-        todoId: number,
-        content: string,
-        dueAt: string | null
-    ) => {
-        const token = getAccessToken();
-
-        if (!token) {
-            throw new Error("로그인이 필요합니다.");
-        }
-
-        const response = await fetch(
-            `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/todos/${todoId}`,
-            {
-                method: "PUT",
-                headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${token}`,
-                },
-                body: JSON.stringify({
-                    content,
-                    dueAt,
-                }),
-            }
-        );
-
-        if (!response.ok) {
-            throw new Error("할 일 수정에 실패했습니다.");
-        }
-
-        const updatedTodo: TodoResponse = await response.json();
-
-        setTodos((prev) =>
-            prev.map((todo) =>
-                todo.todoId === updatedTodo.todoId
-                    ? updatedTodo
-                    : todo
-            )
-        );
-    };
-
     useEffect(() => {
         const fetchTodos = async () => {
-            const token = getAccessToken();
-
-            if (!token) {
-                setErrorMessage("로그인이 필요합니다.");
-                setIsLoading(false);
-                return;
-            }
-
             try {
-                const response = await fetch(
-                    `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/todos`,
-                    {
-                        headers: {
-                            Authorization: `Bearer ${token}`,
-                        },
-                    }
-                );
-
-                if (!response.ok) {
-                    throw new Error();
-                }
-
-                const data: TodoPageResponse = await response.json();
+                const data = await getTodos();
 
                 setTodos(data.content);
-            } catch {
-                setErrorMessage("할 일 목록을 불러오지 못했습니다.");
+                setErrorMessage("");
+            } catch (error) {
+                setErrorMessage(getErrorMessage(error));
             } finally {
                 setIsLoading(false);
             }
         };
 
-        fetchTodos();
+        void fetchTodos();
     }, []);
+
+    const handleCreateTodo = async (
+        content: string,
+        dueAt: string | null
+    ) => {
+        try {
+            const createdTodo = await createTodo({
+                noteId: null,
+                content,
+                dueAt,
+            });
+
+            setTodos((prev) => [
+                createdTodo,
+                ...prev,
+            ]);
+
+            setErrorMessage("");
+        } catch (error) {
+            setErrorMessage(getErrorMessage(error));
+            throw error;
+        }
+    };
+
+    const handleToggleTodoDone = async (
+        todoId: number,
+        isDone: boolean
+    ) => {
+        const nextStatus = isDone
+            ? "TODO"
+            : "DONE";
+
+        try {
+            const updatedTodo =
+                await updateTodoStatus(
+                    todoId,
+                    nextStatus
+                );
+
+            setTodos((prev) =>
+                prev.map((todo) =>
+                    todo.todoId === updatedTodo.todoId
+                        ? updatedTodo
+                        : todo
+                )
+            );
+
+            setErrorMessage("");
+        } catch (error) {
+            setErrorMessage(getErrorMessage(error));
+            throw error;
+        }
+    };
+
+    const handleDeleteTodo = async (
+        todoId: number
+    ) => {
+        try {
+            await deleteTodo(todoId);
+
+            setTodos((prev) =>
+                prev.filter(
+                    (todo) => todo.todoId !== todoId
+                )
+            );
+
+            setErrorMessage("");
+        } catch (error) {
+            setErrorMessage(getErrorMessage(error));
+            throw error;
+        }
+    };
+
+    const handleUpdateTodo = async (
+        todoId: number,
+        content: string,
+        dueAt: string | null
+    ) => {
+        try {
+            const updatedTodo = await updateTodo(
+                todoId,
+                {
+                    content,
+                    dueAt,
+                }
+            );
+
+            setTodos((prev) =>
+                prev.map((todo) =>
+                    todo.todoId === updatedTodo.todoId
+                        ? updatedTodo
+                        : todo
+                )
+            );
+
+            setErrorMessage("");
+        } catch (error) {
+            setErrorMessage(getErrorMessage(error));
+            throw error;
+        }
+    };
 
     if (isLoading) {
         return (
@@ -230,8 +163,9 @@ export default function TodosPage() {
         );
     }
 
-    const filteredTodos =
-        todos.filter((todo) => todo.status === statusFilter);
+    const filteredTodos = todos.filter(
+        (todo) => todo.status === statusFilter
+    );
 
     return (
         <div className="mx-auto max-w-3xl space-y-6">
@@ -245,7 +179,9 @@ export default function TodosPage() {
                 </p>
             </header>
 
-            <TodoCreateForm onCreate={createTodo}/>
+            <TodoCreateForm
+                onCreate={handleCreateTodo}
+            />
 
             <TodoFilter
                 value={statusFilter}
@@ -254,10 +190,18 @@ export default function TodosPage() {
 
             <TodoList
                 todos={filteredTodos}
-                onToggleDone={toggleTodoDone}
-                onDelete={deleteTodo}
-                onUpdate={updateTodo}
+                onToggleDone={handleToggleTodoDone}
+                onDelete={handleDeleteTodo}
+                onUpdate={handleUpdateTodo}
             />
         </div>
     );
+}
+
+function getErrorMessage(error: unknown) {
+    if (error instanceof Error) {
+        return error.message;
+    }
+
+    return "요청 처리에 실패했습니다.";
 }
