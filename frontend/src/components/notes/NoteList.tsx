@@ -1,9 +1,10 @@
 "use client";
 
+import EmptyState from "@/components/common/EmptyState";
+import NoteItem from "@/components/notes/NoteItem";
+
 import type {NoteResponse} from "@/types/note";
 import type {ClassificationItem} from "@/types/schedule";
-
-import NoteItem from "@/components/notes/NoteItem";
 
 type NoteListProps = {
     notes: NoteResponse[];
@@ -58,11 +59,10 @@ export default function NoteList({
                                  }: NoteListProps) {
     if (notes.length === 0) {
         return (
-            <div className="rounded-2xl border border-dashed border-zinc-200 bg-white py-12 text-center">
-                <p className="text-sm text-zinc-500">
-                    아직 작성한 노트가 없습니다.
-                </p>
-            </div>
+            <EmptyState
+                title="아직 작성한 노트가 없습니다."
+                description="위 입력창에서 첫 번째 노트를 작성해보세요."
+            />
         );
     }
 

@@ -4,6 +4,10 @@ import {useEffect, useState} from "react";
 import type {DatesSetArg} from "@fullcalendar/core";
 import type {DateClickArg} from "@fullcalendar/interaction";
 
+import ErrorMessage from "@/components/common/ErrorMessage";
+import LoadingState from "@/components/common/LoadingState";
+import {useToast} from "@/components/common/ToastProvider";
+
 import EventCreateModal from "@/components/events/EventCreateModal";
 import EventDetailModal from "@/components/events/EventDetailModal";
 import EventListView from "@/components/events/EventListView";
@@ -27,42 +31,70 @@ type EventRange = {
 };
 
 export default function EventsPage() {
-    const [events, setEvents] = useState<EventSummary[]>([]);
-    const [viewMode, setViewMode] = useState<ViewMode>("list");
+    const {showToast} = useToast();
 
-    const [selectedDate, setSelectedDate] = useState<string | null>(null);
+    const [events, setEvents] =
+        useState<EventSummary[]>([]);
+
+    const [viewMode, setViewMode] =
+        useState<ViewMode>("list");
+
+    const [selectedDate, setSelectedDate] =
+        useState<string | null>(null);
+
     const [selectedEvent, setSelectedEvent] =
         useState<EventDetail | null>(null);
 
-    const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-    const [errorMessage, setErrorMessage] = useState("");
+    const [
+        isCreateModalOpen,
+        setIsCreateModalOpen,
+    ] = useState(false);
 
-    const [currentRange, setCurrentRange] = useState<EventRange>(() =>
-        getCurrentMonthRange()
-    );
+    const [isLoading, setIsLoading] =
+        useState(true);
+
+    const [errorMessage, setErrorMessage] =
+        useState("");
+
+    const [currentRange, setCurrentRange] =
+        useState<EventRange>(() =>
+            getCurrentMonthRange(),
+        );
 
     useEffect(() => {
         let cancelled = false;
 
-        getEvents(
-            currentRange.startAt,
-            currentRange.endAt
-        )
-            .then((data) => {
+        const fetchEvents = async () => {
+            try {
+                setIsLoading(true);
+
+                const data = await getEvents(
+                    currentRange.startAt,
+                    currentRange.endAt,
+                );
+
                 if (cancelled) {
                     return;
                 }
 
                 setEvents(data);
                 setErrorMessage("");
-            })
-            .catch((error) => {
+            } catch (error) {
                 if (cancelled) {
                     return;
                 }
 
-                setErrorMessage(getErrorMessage(error));
-            });
+                setErrorMessage(
+                    getErrorMessage(error),
+                );
+            } finally {
+                if (!cancelled) {
+                    setIsLoading(false);
+                }
+            }
+        };
+
+        void fetchEvents();
 
         return () => {
             cancelled = true;
@@ -73,24 +105,32 @@ export default function EventsPage() {
         try {
             const data = await getEvents(
                 currentRange.startAt,
-                currentRange.endAt
+                currentRange.endAt,
             );
 
             setEvents(data);
             setErrorMessage("");
         } catch (error) {
-            setErrorMessage(getErrorMessage(error));
+            setErrorMessage(
+                getErrorMessage(error),
+            );
+
+            throw error;
         }
     };
 
-    const handleDatesSet = (info: DatesSetArg) => {
+    const handleDatesSet = (
+        info: DatesSetArg,
+    ) => {
         setCurrentRange({
             startAt: info.startStr.slice(0, 19),
             endAt: info.endStr.slice(0, 19),
         });
     };
 
-    const handleDateClick = (info: DateClickArg) => {
+    const handleDateClick = (
+        info: DateClickArg,
+    ) => {
         setSelectedDate(info.dateStr);
         setIsCreateModalOpen(true);
     };
@@ -111,7 +151,7 @@ export default function EventsPage() {
         startAt: string,
         endAt: string | null,
         allDay: boolean,
-        location: string | null
+        location: string | null,
     ) => {
         try {
             setErrorMessage("");
@@ -127,13 +167,20 @@ export default function EventsPage() {
             });
 
             await refreshEvents();
+
+            showToast("일정을 등록했습니다.");
         } catch (error) {
-            setErrorMessage(getErrorMessage(error));
+            setErrorMessage(
+                getErrorMessage(error),
+            );
+
             throw error;
         }
     };
 
-    const handleEventClick = async (eventId: number) => {
+    const handleEventClick = async (
+        eventId: number,
+    ) => {
         try {
             setErrorMessage("");
 
@@ -141,7 +188,9 @@ export default function EventsPage() {
 
             setSelectedEvent(event);
         } catch (error) {
-            setErrorMessage(getErrorMessage(error));
+            setErrorMessage(
+                getErrorMessage(error),
+            );
         }
     };
 
@@ -152,7 +201,7 @@ export default function EventsPage() {
         startAt: string,
         endAt: string | null,
         allDay: boolean,
-        location: string | null
+        location: string | null,
     ) => {
         try {
             setErrorMessage("");
@@ -169,13 +218,20 @@ export default function EventsPage() {
             setSelectedEvent(null);
 
             await refreshEvents();
+
+            showToast("일정을 수정했습니다.");
         } catch (error) {
-            setErrorMessage(getErrorMessage(error));
+            setErrorMessage(
+                getErrorMessage(error),
+            );
+
             throw error;
         }
     };
 
-    const handleDeleteEvent = async (eventId: number) => {
+    const handleDeleteEvent = async (
+        eventId: number,
+    ) => {
         try {
             setErrorMessage("");
 
@@ -184,8 +240,13 @@ export default function EventsPage() {
             setSelectedEvent(null);
 
             await refreshEvents();
+
+            showToast("일정을 삭제했습니다.");
         } catch (error) {
-            setErrorMessage(getErrorMessage(error));
+            setErrorMessage(
+                getErrorMessage(error),
+            );
+
             throw error;
         }
     };
@@ -215,7 +276,9 @@ export default function EventsPage() {
             <div className="flex items-center gap-2">
                 <button
                     type="button"
-                    onClick={() => setViewMode("list")}
+                    onClick={() =>
+                        setViewMode("list")
+                    }
                     className={`rounded-lg px-3 py-2 text-sm ${
                         viewMode === "list"
                             ? "bg-zinc-900 text-white"
@@ -227,7 +290,9 @@ export default function EventsPage() {
 
                 <button
                     type="button"
-                    onClick={() => setViewMode("month")}
+                    onClick={() =>
+                        setViewMode("month")
+                    }
                     className={`rounded-lg px-3 py-2 text-sm ${
                         viewMode === "month"
                             ? "bg-zinc-900 text-white"
@@ -238,46 +303,72 @@ export default function EventsPage() {
                 </button>
             </div>
 
-            {errorMessage && (
-                <p className="text-sm text-red-500">
-                    {errorMessage}
-                </p>
-            )}
+            <ErrorMessage
+                message={errorMessage}
+            />
 
-            {viewMode === "list" && (
-                <EventListView
-                    events={events}
-                    onEventClick={(eventId) =>
-                        void handleEventClick(eventId)
-                    }
-                />
-            )}
+            {isLoading ? (
+                <LoadingState />
+            ) : (
+                <>
+                    {viewMode === "list" && (
+                        <EventListView
+                            events={events}
+                            onEventClick={(
+                                eventId,
+                            ) =>
+                                void handleEventClick(
+                                    eventId,
+                                )
+                            }
+                        />
+                    )}
 
-            {viewMode === "month" && (
-                <EventMonthView
-                    events={events}
-                    onDatesSet={handleDatesSet}
-                    onDateClick={handleDateClick}
-                    onEventClick={(eventId) =>
-                        void handleEventClick(eventId)
-                    }
-                />
+                    {viewMode === "month" && (
+                        <EventMonthView
+                            events={events}
+                            onDatesSet={
+                                handleDatesSet
+                            }
+                            onDateClick={
+                                handleDateClick
+                            }
+                            onEventClick={(
+                                eventId,
+                            ) =>
+                                void handleEventClick(
+                                    eventId,
+                                )
+                            }
+                        />
+                    )}
+                </>
             )}
 
             {isCreateModalOpen && (
                 <EventCreateModal
                     initialDate={selectedDate}
-                    onClose={handleCloseCreateModal}
-                    onCreate={handleCreateEvent}
+                    onClose={
+                        handleCloseCreateModal
+                    }
+                    onCreate={
+                        handleCreateEvent
+                    }
                 />
             )}
 
             {selectedEvent && (
                 <EventDetailModal
                     event={selectedEvent}
-                    onClose={() => setSelectedEvent(null)}
-                    onUpdate={handleUpdateEvent}
-                    onDelete={handleDeleteEvent}
+                    onClose={() =>
+                        setSelectedEvent(null)
+                    }
+                    onUpdate={
+                        handleUpdateEvent
+                    }
+                    onDelete={
+                        handleDeleteEvent
+                    }
                 />
             )}
         </div>
@@ -293,7 +384,7 @@ function getCurrentMonthRange(): EventRange {
         1,
         0,
         0,
-        0
+        0,
     );
 
     const endAt = new Date(
@@ -302,7 +393,7 @@ function getCurrentMonthRange(): EventRange {
         1,
         0,
         0,
-        0
+        0,
     );
 
     return {
@@ -311,13 +402,30 @@ function getCurrentMonthRange(): EventRange {
     };
 }
 
-function toLocalDateTimeString(date: Date) {
+function toLocalDateTimeString(
+    date: Date,
+) {
     const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, "0");
-    const day = String(date.getDate()).padStart(2, "0");
-    const hour = String(date.getHours()).padStart(2, "0");
-    const minute = String(date.getMinutes()).padStart(2, "0");
-    const second = String(date.getSeconds()).padStart(2, "0");
+
+    const month = String(
+        date.getMonth() + 1,
+    ).padStart(2, "0");
+
+    const day = String(
+        date.getDate(),
+    ).padStart(2, "0");
+
+    const hour = String(
+        date.getHours(),
+    ).padStart(2, "0");
+
+    const minute = String(
+        date.getMinutes(),
+    ).padStart(2, "0");
+
+    const second = String(
+        date.getSeconds(),
+    ).padStart(2, "0");
 
     return `${year}-${month}-${day}T${hour}:${minute}:${second}`;
 }

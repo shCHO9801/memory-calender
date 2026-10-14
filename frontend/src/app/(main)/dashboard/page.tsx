@@ -3,11 +3,13 @@
 import {useEffect, useState} from "react";
 import type {DatesSetArg} from "@fullcalendar/core";
 
+import ErrorMessage from "@/components/common/ErrorMessage";
+import LoadingState from "@/components/common/LoadingState";
+import DashboardEventDetailModal from "@/components/dashboard/DashboardEventDetailModal";
+import MonthlyCalendar from "@/components/dashboard/MonthlyCalendar";
 import QuickMemo from "@/components/dashboard/QuickMemo";
 import TodoPanel from "@/components/dashboard/TodoPanel";
 import TodayEventsPanel from "@/components/dashboard/TodayEventsPanel";
-import MonthlyCalendar from "@/components/dashboard/MonthlyCalendar";
-import DashboardEventDetailModal from "@/components/dashboard/DashboardEventDetailModal";
 
 import {apiFetch} from "@/lib/api";
 import {
@@ -50,20 +52,26 @@ export default function DashboardPage() {
     const [selectedEvent, setSelectedEvent] =
         useState<EventDetail | null>(null);
 
-    const [isLoading, setIsLoading] = useState(true);
-    const [errorMessage, setErrorMessage] = useState("");
+    const [isLoading, setIsLoading] =
+        useState(true);
+
+    const [errorMessage, setErrorMessage] =
+        useState("");
 
     useEffect(() => {
         const fetchDashboard = async () => {
             try {
-                const data = await apiFetch<DashboardResponse>(
-                    "/api/dashboard"
-                );
+                const data =
+                    await apiFetch<DashboardResponse>(
+                        "/api/dashboard",
+                    );
 
                 setDashboard(data);
                 setErrorMessage("");
             } catch (error) {
-                setErrorMessage(getErrorMessage(error));
+                setErrorMessage(
+                    getErrorMessage(error),
+                );
             } finally {
                 setIsLoading(false);
             }
@@ -74,58 +82,47 @@ export default function DashboardPage() {
 
     const fetchCalendarEvents = async (
         startAt: string,
-        endAt: string
+        endAt: string,
     ) => {
         try {
             const data = await getEvents(
                 startAt,
-                endAt
+                endAt,
             );
 
             setCalendarEvents(data);
             setErrorMessage("");
         } catch (error) {
-            setErrorMessage(getErrorMessage(error));
+            setErrorMessage(
+                getErrorMessage(error),
+            );
         }
     };
 
-    const handleDatesSet = (info: DatesSetArg) => {
+    const handleDatesSet = (
+        info: DatesSetArg,
+    ) => {
         void fetchCalendarEvents(
             info.startStr.slice(0, 19),
-            info.endStr.slice(0, 19)
+            info.endStr.slice(0, 19),
         );
     };
 
-    const handleEventClick = async (eventId: number) => {
+    const handleEventClick = async (
+        eventId: number,
+    ) => {
         try {
-            const event = await getEvent(eventId);
+            const event =
+                await getEvent(eventId);
 
             setSelectedEvent(event);
             setErrorMessage("");
         } catch (error) {
-            setErrorMessage(getErrorMessage(error));
+            setErrorMessage(
+                getErrorMessage(error),
+            );
         }
     };
-
-    if (isLoading) {
-        return (
-            <main className="flex min-h-screen items-center justify-center">
-                <p className="text-sm text-zinc-500">
-                    불러오는 중...
-                </p>
-            </main>
-        );
-    }
-
-    if (errorMessage) {
-        return (
-            <main className="flex min-h-screen items-center justify-center">
-                <p className="text-sm text-red-500">
-                    {errorMessage}
-                </p>
-            </main>
-        );
-    }
 
     return (
         <>
@@ -140,33 +137,55 @@ export default function DashboardPage() {
                     </p>
                 </header>
 
-                <div className="grid gap-4 lg:grid-cols-[minmax(0,1.7fr)_minmax(340px,1fr)]">
-                    <MonthlyCalendar
-                        events={calendarEvents}
-                        onDatesSet={handleDatesSet}
-                        onEventClick={(eventId) => {
-                            void handleEventClick(eventId);
-                        }}
-                    />
+                <ErrorMessage
+                    message={errorMessage}
+                />
 
-                    <div className="space-y-4">
-                        <TodoPanel
-                            todos={dashboard?.activeTodos ?? []}
+                {isLoading ? (
+                    <LoadingState />
+                ) : (
+                    <div className="grid gap-4 lg:grid-cols-[minmax(0,1.7fr)_minmax(340px,1fr)]">
+                        <MonthlyCalendar
+                            events={calendarEvents}
+                            onDatesSet={
+                                handleDatesSet
+                            }
+                            onEventClick={(
+                                eventId,
+                            ) => {
+                                void handleEventClick(
+                                    eventId,
+                                );
+                            }}
                         />
 
-                        <TodayEventsPanel
-                            events={dashboard?.todayEvents ?? []}
-                        />
+                        <div className="space-y-4">
+                            <TodoPanel
+                                todos={
+                                    dashboard?.activeTodos ??
+                                    []
+                                }
+                            />
 
-                        <QuickMemo />
+                            <TodayEventsPanel
+                                events={
+                                    dashboard?.todayEvents ??
+                                    []
+                                }
+                            />
+
+                            <QuickMemo />
+                        </div>
                     </div>
-                </div>
+                )}
             </div>
 
             {selectedEvent && (
                 <DashboardEventDetailModal
                     event={selectedEvent}
-                    onClose={() => setSelectedEvent(null)}
+                    onClose={() =>
+                        setSelectedEvent(null)
+                    }
                 />
             )}
         </>
