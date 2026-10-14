@@ -7,12 +7,17 @@ import org.springframework.http.HttpStatus;
 @Getter
 @RequiredArgsConstructor
 public enum ErrorCode {
-    /* 400 BAD_REQUEST */
+
     /* 400 BAD_REQUEST */
     INVALID_EVENT_TIME(
             HttpStatus.BAD_REQUEST,
             "EVENT_001",
             "일정 종료 시간은 시작 시간보다 빠를 수 없습니다."
+    ),
+    AI_CONFIRM_INVALID(
+            HttpStatus.BAD_REQUEST,
+            "AI_002",
+            "AI 후보 확정 요청이 올바르지 않습니다."
     ),
 
     /* 401 UNAUTHORIZED */
@@ -41,6 +46,11 @@ public enum ErrorCode {
             "EVENT_002",
             "일정를 찾을 수 없습니다."),
 
+    TODO_NOT_FOUND(
+            HttpStatus.NOT_FOUND,
+            "TODO_001",
+            "Todo를 찾을 수 없습니다."),
+
     /* 409 Conflict*/
     DUPLICATE_EMAIL(
             HttpStatus.CONFLICT,
@@ -59,7 +69,7 @@ public enum ErrorCode {
     AI_API_ERROR(
             HttpStatus.BAD_GATEWAY,
             "AI_001",
-            "AI 일정 추출 중 오류가 발생했습니다."
+            "AI 분류 중 오류가 발생했습니다."
     );
 
     private final HttpStatus httpStatus;

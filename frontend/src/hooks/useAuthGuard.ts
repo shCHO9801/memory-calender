@@ -1,18 +1,33 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import {
+  useEffect,
+  useState,
+} from "react";
+import {useRouter} from "next/navigation";
 
-import { getAccessToken } from "@/lib/auth-storage";
+import {
+  getAccessToken,
+  isAccessTokenExpired,
+  removeAccessToken,
+} from "@/lib/auth-storage";
 
 export function useAuthGuard() {
   const router = useRouter();
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  const [
+    isAuthenticated,
+    setIsAuthenticated,
+  ] = useState(false);
 
   useEffect(() => {
     const token = getAccessToken();
 
-    if (!token) {
+    if (
+        !token ||
+        isAccessTokenExpired(token)
+    ) {
+      removeAccessToken();
       router.replace("/login");
       return;
     }

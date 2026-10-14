@@ -18,6 +18,8 @@ public record CreateEventRequestDto(
 
         LocalDateTime endAt,
 
-        boolean allDay
+        boolean allDay,
+
+        String location
 ) {
 }

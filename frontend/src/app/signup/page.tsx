@@ -1,11 +1,19 @@
 "use client";
 
-import { useEffect, useState, type FormEvent } from "react";
-import { useRouter } from "next/navigation";
+import {
+  type FormEvent,
+  useEffect,
+  useState,
+} from "react";
+import {useRouter} from "next/navigation";
 
-import { checkEmail, signUp } from "@/lib/auth";
-import { getAccessToken } from "@/lib/auth-storage";
-import { ApiError } from "@/lib/api";
+import {ApiError} from "@/lib/api";
+import {checkEmail, signUp} from "@/lib/auth";
+import {
+  getAccessToken,
+  isAccessTokenExpired,
+  removeAccessToken,
+} from "@/lib/auth-storage";
 
 export default function SignUpPage() {
   const router = useRouter();
@@ -15,27 +23,41 @@ export default function SignUpPage() {
   const [password, setPassword] = useState("");
 
   const [isEmailChecked, setIsEmailChecked] =
-    useState(false);
+      useState(false);
 
   const [isEmailAvailable, setIsEmailAvailable] =
-    useState(false);
+      useState(false);
 
   const [emailMessage, setEmailMessage] =
-    useState("");
+      useState("");
 
   const [errorMessage, setErrorMessage] =
-    useState("");
+      useState("");
+
+  const [isCheckingEmail, setIsCheckingEmail] =
+      useState(false);
 
   const [isSubmitting, setIsSubmitting] =
-    useState(false);
+      useState(false);
 
   useEffect(() => {
-    if (getAccessToken()) {
-      router.replace("/notes");
+    const token = getAccessToken();
+
+    if (!token) {
+      return;
     }
+
+    if (isAccessTokenExpired(token)) {
+      removeAccessToken();
+      return;
+    }
+
+    router.replace("/dashboard");
   }, [router]);
 
-  const handleEmailChange = (value: string) => {
+  const handleEmailChange = (
+      value: string,
+  ) => {
     setEmail(value);
 
     setIsEmailChecked(false);
@@ -45,63 +67,86 @@ export default function SignUpPage() {
 
   const handleCheckEmail = async () => {
     if (!email.trim()) {
-      setEmailMessage("이메일을 입력해주세요.");
+      setEmailMessage(
+          "이메일을 입력해주세요.",
+      );
       return;
     }
 
     try {
+      setIsCheckingEmail(true);
       setErrorMessage("");
 
-      const response = await checkEmail(email);
+      const response =
+          await checkEmail(email.trim());
 
       setIsEmailChecked(true);
-      setIsEmailAvailable(response.available);
+      setIsEmailAvailable(
+          response.available,
+      );
 
-      if (response.available) {
-        setEmailMessage("사용 가능한 이메일입니다.");
-      } else {
-        setEmailMessage("이미 사용 중인 이메일입니다.");
-      }
+      setEmailMessage(
+          response.available
+              ? "사용 가능한 이메일입니다."
+              : "이미 사용 중인 이메일입니다.",
+      );
     } catch (error) {
       setIsEmailChecked(false);
       setIsEmailAvailable(false);
 
-      if (error instanceof ApiError && error.field === "email") {
+      if (
+          error instanceof ApiError &&
+          error.field === "email"
+      ) {
         setEmailMessage(error.message);
         return;
       }
 
-      setEmailMessage("이메일 중복 확인에 실패했습니다.");
+      setEmailMessage(
+          "이메일 중복 확인에 실패했습니다.",
+      );
+    } finally {
+      setIsCheckingEmail(false);
     }
   };
 
   const handleSubmit = async (
-    event: FormEvent<HTMLFormElement>,
+      event: FormEvent<HTMLFormElement>,
   ) => {
     event.preventDefault();
 
     if (!name.trim()) {
-      setErrorMessage("이름을 입력해주세요.");
+      setErrorMessage(
+          "이름을 입력해주세요.",
+      );
       return;
     }
 
     if (!email.trim()) {
-      setErrorMessage("이메일을 입력해주세요.");
+      setErrorMessage(
+          "이메일을 입력해주세요.",
+      );
       return;
     }
 
     if (!password) {
-      setErrorMessage("비밀번호를 입력해주세요.");
+      setErrorMessage(
+          "비밀번호를 입력해주세요.",
+      );
       return;
     }
 
     if (!isEmailChecked) {
-      setErrorMessage("이메일 중복 확인을 해주세요.");
+      setErrorMessage(
+          "이메일 중복 확인을 해주세요.",
+      );
       return;
     }
 
     if (!isEmailAvailable) {
-      setErrorMessage("사용 가능한 이메일을 입력해주세요.");
+      setErrorMessage(
+          "사용 가능한 이메일을 입력해주세요.",
+      );
       return;
     }
 
@@ -110,81 +155,182 @@ export default function SignUpPage() {
       setErrorMessage("");
 
       await signUp({
-        name,
-        email,
+        name: name.trim(),
+        email: email.trim(),
         password,
       });
-
-      alert("회원가입이 완료되었습니다.");
 
       router.push("/login");
     } catch (error) {
       if (error instanceof ApiError) {
-        setErrorMessage(error.message);
+        setErrorMessage(
+            error.message,
+        );
         return;
       }
 
-      setErrorMessage("회원가입에 실패했습니다.");
+      setErrorMessage(
+          "회원가입에 실패했습니다.",
+      );
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <main>
-      <h1>회원가입</h1>
+      <main className="flex min-h-screen items-center justify-center bg-zinc-50 px-4 py-8">
+        <section className="w-full max-w-md rounded-2xl border border-zinc-200 bg-white p-8 shadow-sm">
+          <div className="mb-8 text-center">
+            <h1 className="text-2xl font-semibold text-zinc-900">
+              Memory Calendar
+            </h1>
 
-      <form onSubmit={handleSubmit}>
-        <div>
-          <label htmlFor="name">이름</label>
+            <p className="mt-2 text-sm text-zinc-500">
+              새로운 계정을 만들어 시작하세요.
+            </p>
+          </div>
 
-          <input
-            id="name"
-            type="text"
-            value={name}
-            onChange={(event) => setName(event.target.value)}
-            required
-          />
-        </div>
+          <form
+              onSubmit={handleSubmit}
+              className="space-y-5"
+          >
+            <div>
+              <label
+                  htmlFor="name"
+                  className="mb-2 block text-sm font-medium text-zinc-700"
+              >
+                이름
+              </label>
 
-        <div>
-          <label htmlFor="email">이메일</label>
+              <input
+                  id="name"
+                  type="text"
+                  value={name}
+                  onChange={(event) =>
+                      setName(
+                          event.target.value,
+                      )
+                  }
+                  placeholder="이름"
+                  autoComplete="name"
+                  required
+                  className="w-full rounded-lg border border-zinc-300 px-3 py-2.5 text-sm outline-none transition focus:border-zinc-500"
+              />
+            </div>
 
-          <input
-            id="email"
-            type="email"
-            value={email}
-            onChange={(event) =>
-              handleEmailChange(event.target.value)
-            }
-            required
-          />
+            <div>
+              <label
+                  htmlFor="email"
+                  className="mb-2 block text-sm font-medium text-zinc-700"
+              >
+                이메일
+              </label>
 
-          <button type="button" onClick={handleCheckEmail}>
-            중복 확인
-          </button>
+              <div className="flex gap-2">
+                <input
+                    id="email"
+                    type="email"
+                    value={email}
+                    onChange={(event) =>
+                        handleEmailChange(
+                            event.target
+                                .value,
+                        )
+                    }
+                    placeholder="example@email.com"
+                    autoComplete="email"
+                    required
+                    className="min-w-0 flex-1 rounded-lg border border-zinc-300 px-3 py-2.5 text-sm outline-none transition focus:border-zinc-500"
+                />
 
-          {emailMessage && <p>{emailMessage}</p>}
-        </div>
+                <button
+                    type="button"
+                    onClick={() => {
+                      void handleCheckEmail();
+                    }}
+                    disabled={
+                        isCheckingEmail ||
+                        !email.trim()
+                    }
+                    className="shrink-0 rounded-lg border border-zinc-300 px-3 py-2.5 text-sm font-medium text-zinc-700 transition hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {isCheckingEmail
+                      ? "확인 중..."
+                      : "중복 확인"}
+                </button>
+              </div>
 
-        <div>
-          <label htmlFor="password">비밀번호</label>
+              {emailMessage && (
+                  <p
+                      className={`mt-2 text-sm ${
+                          isEmailChecked &&
+                          isEmailAvailable
+                              ? "text-emerald-600"
+                              : "text-red-500"
+                      }`}
+                  >
+                    {emailMessage}
+                  </p>
+              )}
+            </div>
 
-          <input
-            id="password"
-            type="password"
-            value={password}
-            onChange={(event) => setPassword(event.target.value)}
-            required
-          />
-        </div>
+            <div>
+              <label
+                  htmlFor="password"
+                  className="mb-2 block text-sm font-medium text-zinc-700"
+              >
+                비밀번호
+              </label>
 
-        {errorMessage && <p>{errorMessage}</p>}
+              <input
+                  id="password"
+                  type="password"
+                  value={password}
+                  onChange={(event) =>
+                      setPassword(
+                          event.target.value,
+                      )
+                  }
+                  placeholder="비밀번호"
+                  autoComplete="new-password"
+                  required
+                  className="w-full rounded-lg border border-zinc-300 px-3 py-2.5 text-sm outline-none transition focus:border-zinc-500"
+              />
+            </div>
 
-        <button type="submit" disabled={isSubmitting}>
-          {isSubmitting ? "가입 중..." : "회원가입"}
-        </button>
-      </form>
-    </main>
+            {errorMessage && (
+                <p className="text-sm text-red-500">
+                  {errorMessage}
+                </p>
+            )}
+
+            <button
+                type="submit"
+                disabled={isSubmitting}
+                className="w-full rounded-lg bg-zinc-900 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {isSubmitting
+                  ? "가입 중..."
+                  : "회원가입"}
+            </button>
+          </form>
+
+          <div className="mt-6 flex items-center justify-center gap-2 text-sm">
+                    <span className="text-zinc-500">
+                        이미 계정이 있나요?
+                    </span>
+
+            <button
+                type="button"
+                onClick={() =>
+                    router.push("/login")
+                }
+                className="font-medium text-zinc-900 hover:underline"
+            >
+              로그인
+            </button>
+          </div>
+        </section>
+      </main>
   );
 }

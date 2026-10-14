@@ -16,6 +16,8 @@ public record UpdateEventRequestDto(
 
         LocalDateTime endAt,
 
-        boolean allDay
+        boolean allDay,
+
+        String location
 ) {
 }

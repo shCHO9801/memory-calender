@@ -32,32 +32,59 @@ export class ApiError extends Error {
 }
 
 export async function apiFetch<T>(
-  path: string,
-  options: RequestInit = {},
+    path: string,
+    options: RequestInit = {},
 ): Promise<T> {
   const token = getAccessToken();
 
-  const response = await fetch(`${API_BASE_URL}${path}`, {
-    ...options,
-    headers: {
-      "Content-Type": "application/json",
-      ...(token && {
-        Authorization: `Bearer ${token}`,
-      }),
-      ...options.headers,
-    },
-  });
+  const headers = new Headers(options.headers);
+
+  if (token) {
+    headers.set(
+        "Authorization",
+        `Bearer ${token}`,
+    );
+  }
+
+  if (
+      options.body &&
+      !headers.has("Content-Type")
+  ) {
+    headers.set(
+        "Content-Type",
+        "application/json",
+    );
+  }
+
+  const response = await fetch(
+      `${API_BASE_URL}${path}`,
+      {
+        ...options,
+        headers,
+      },
+  );
+
+  if (response.status === 401) {
+    removeAccessToken();
+
+    if (typeof window !== "undefined") {
+      window.location.replace("/login");
+    }
+  }
 
   if (!response.ok) {
-    const errorResponse =
-      (await response.json()) as ApiErrorResponse;
+    let errorResponse: ApiErrorResponse;
 
-    if (response.status === 401) {
-      removeAccessToken();
-
-      if (typeof window !== "undefined") {
-        window.location.replace("/login");
-      }
+    try {
+      errorResponse =
+          (await response.json()) as ApiErrorResponse;
+    } catch {
+      errorResponse = {
+        status: response.status,
+        message: "요청 처리에 실패했습니다.",
+        code: null,
+        field: null,
+      };
     }
 
     throw new ApiError(errorResponse);
@@ -67,5 +94,5 @@ export async function apiFetch<T>(
     return undefined as T;
   }
 
-  return response.json();
+  return response.json() as Promise<T>;
 }

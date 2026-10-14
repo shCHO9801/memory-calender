@@ -17,6 +17,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 
 @RestController
@@ -106,5 +107,27 @@ public class EventController {
         eventService.deleteEvent(userId, eventId);
 
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/calendar")
+    public ResponseEntity<List<CalendarEventSummaryDto>> getCalendarEvents(
+            Authentication authentication,
+            @RequestParam
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
+            LocalDateTime startAt,
+            @RequestParam
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
+            LocalDateTime endAt
+    ) {
+        Long userId = Long.valueOf(authentication.getName());
+
+        List<CalendarEventSummaryDto> response =
+                eventService.getCalendarEvents(
+                        userId,
+                        startAt,
+                        endAt
+                );
+
+        return ResponseEntity.ok(response);
     }
 }
