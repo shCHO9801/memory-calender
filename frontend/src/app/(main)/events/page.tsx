@@ -66,8 +66,6 @@ export default function EventsPage() {
 
         const fetchEvents = async () => {
             try {
-                setIsLoading(true);
-
                 const data = await getEvents(
                     currentRange.startAt,
                     currentRange.endAt,
@@ -119,12 +117,22 @@ export default function EventsPage() {
         }
     };
 
-    const handleDatesSet = (
-        info: DatesSetArg,
-    ) => {
-        setCurrentRange({
-            startAt: info.startStr.slice(0, 19),
-            endAt: info.endStr.slice(0, 19),
+    const handleDatesSet = (info: DatesSetArg) => {
+        const startAt = info.startStr.slice(0, 19);
+        const endAt = info.endStr.slice(0, 19);
+
+        setCurrentRange((prev) => {
+            if (
+                prev.startAt === startAt &&
+                prev.endAt === endAt
+            ) {
+                return prev;
+            }
+
+            return {
+                startAt,
+                endAt,
+            };
         });
     };
 
@@ -308,7 +316,7 @@ export default function EventsPage() {
             />
 
             {isLoading ? (
-                <LoadingState />
+                <LoadingState/>
             ) : (
                 <>
                     {viewMode === "list" && (
