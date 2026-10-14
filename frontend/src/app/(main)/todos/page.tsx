@@ -2,8 +2,13 @@
 
 import {useEffect, useState} from "react";
 
-import TodoFilter from "@/components/todo/TodoFilter";
+import ErrorMessage from "@/components/common/ErrorMessage";
+import LoadingState from "@/components/common/LoadingState";
+import {
+    useToast,
+} from "@/components/common/ToastProvider";
 import TodoCreateForm from "@/components/todo/TodoCreateForm";
+import TodoFilter from "@/components/todo/TodoFilter";
 import TodoList from "@/components/todo/TodoList";
 
 import {
@@ -16,14 +21,20 @@ import {
 } from "@/lib/todos-api";
 
 export default function TodosPage() {
-    const [todos, setTodos] = useState<TodoResponse[]>([]);
+    const {showToast} = useToast();
+
+    const [todos, setTodos] =
+        useState<TodoResponse[]>([]);
 
     const [statusFilter, setStatusFilter] = useState<
         "TODO" | "DONE"
     >("TODO");
 
-    const [isLoading, setIsLoading] = useState(true);
-    const [errorMessage, setErrorMessage] = useState("");
+    const [isLoading, setIsLoading] =
+        useState(true);
+
+    const [errorMessage, setErrorMessage] =
+        useState("");
 
     useEffect(() => {
         const fetchTodos = async () => {
@@ -33,7 +44,9 @@ export default function TodosPage() {
                 setTodos(data.content);
                 setErrorMessage("");
             } catch (error) {
-                setErrorMessage(getErrorMessage(error));
+                setErrorMessage(
+                    getErrorMessage(error),
+                );
             } finally {
                 setIsLoading(false);
             }
@@ -44,7 +57,7 @@ export default function TodosPage() {
 
     const handleCreateTodo = async (
         content: string,
-        dueAt: string | null
+        dueAt: string | null,
     ) => {
         try {
             const createdTodo = await createTodo({
@@ -59,15 +72,20 @@ export default function TodosPage() {
             ]);
 
             setErrorMessage("");
+
+            showToast("할 일을 추가했습니다.");
         } catch (error) {
-            setErrorMessage(getErrorMessage(error));
+            setErrorMessage(
+                getErrorMessage(error),
+            );
+
             throw error;
         }
     };
 
     const handleToggleTodoDone = async (
         todoId: number,
-        isDone: boolean
+        isDone: boolean,
     ) => {
         const nextStatus = isDone
             ? "TODO"
@@ -77,39 +95,53 @@ export default function TodosPage() {
             const updatedTodo =
                 await updateTodoStatus(
                     todoId,
-                    nextStatus
+                    nextStatus,
                 );
 
             setTodos((prev) =>
                 prev.map((todo) =>
                     todo.todoId === updatedTodo.todoId
                         ? updatedTodo
-                        : todo
-                )
+                        : todo,
+                ),
             );
 
             setErrorMessage("");
+
+            showToast(
+                nextStatus === "DONE"
+                    ? "할 일을 완료했습니다."
+                    : "할 일을 다시 진행 상태로 변경했습니다.",
+            );
         } catch (error) {
-            setErrorMessage(getErrorMessage(error));
+            setErrorMessage(
+                getErrorMessage(error),
+            );
+
             throw error;
         }
     };
 
     const handleDeleteTodo = async (
-        todoId: number
+        todoId: number,
     ) => {
         try {
             await deleteTodo(todoId);
 
             setTodos((prev) =>
                 prev.filter(
-                    (todo) => todo.todoId !== todoId
-                )
+                    (todo) => todo.todoId !== todoId,
+                ),
             );
 
             setErrorMessage("");
+
+            showToast("할 일을 삭제했습니다.");
         } catch (error) {
-            setErrorMessage(getErrorMessage(error));
+            setErrorMessage(
+                getErrorMessage(error),
+            );
+
             throw error;
         }
     };
@@ -117,7 +149,7 @@ export default function TodosPage() {
     const handleUpdateTodo = async (
         todoId: number,
         content: string,
-        dueAt: string | null
+        dueAt: string | null,
     ) => {
         try {
             const updatedTodo = await updateTodo(
@@ -125,46 +157,31 @@ export default function TodosPage() {
                 {
                     content,
                     dueAt,
-                }
+                },
             );
 
             setTodos((prev) =>
                 prev.map((todo) =>
                     todo.todoId === updatedTodo.todoId
                         ? updatedTodo
-                        : todo
-                )
+                        : todo,
+                ),
             );
 
             setErrorMessage("");
+
+            showToast("할 일을 수정했습니다.");
         } catch (error) {
-            setErrorMessage(getErrorMessage(error));
+            setErrorMessage(
+                getErrorMessage(error),
+            );
+
             throw error;
         }
     };
 
-    if (isLoading) {
-        return (
-            <div className="flex min-h-60 items-center justify-center">
-                <p className="text-sm text-zinc-500">
-                    불러오는 중...
-                </p>
-            </div>
-        );
-    }
-
-    if (errorMessage) {
-        return (
-            <div className="flex min-h-60 items-center justify-center">
-                <p className="text-sm text-red-500">
-                    {errorMessage}
-                </p>
-            </div>
-        );
-    }
-
     const filteredTodos = todos.filter(
-        (todo) => todo.status === statusFilter
+        (todo) => todo.status === statusFilter,
     );
 
     return (
@@ -179,21 +196,31 @@ export default function TodosPage() {
                 </p>
             </header>
 
-            <TodoCreateForm
-                onCreate={handleCreateTodo}
-            />
+            <ErrorMessage message={errorMessage} />
 
-            <TodoFilter
-                value={statusFilter}
-                onChange={setStatusFilter}
-            />
+            {isLoading ? (
+                <LoadingState />
+            ) : (
+                <>
+                    <TodoCreateForm
+                        onCreate={handleCreateTodo}
+                    />
 
-            <TodoList
-                todos={filteredTodos}
-                onToggleDone={handleToggleTodoDone}
-                onDelete={handleDeleteTodo}
-                onUpdate={handleUpdateTodo}
-            />
+                    <TodoFilter
+                        value={statusFilter}
+                        onChange={setStatusFilter}
+                    />
+
+                    <TodoList
+                        todos={filteredTodos}
+                        onToggleDone={
+                            handleToggleTodoDone
+                        }
+                        onDelete={handleDeleteTodo}
+                        onUpdate={handleUpdateTodo}
+                    />
+                </>
+            )}
         </div>
     );
 }

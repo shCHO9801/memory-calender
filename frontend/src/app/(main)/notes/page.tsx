@@ -6,6 +6,11 @@ import {
     useState,
 } from "react";
 
+import ErrorMessage from "@/components/common/ErrorMessage";
+import LoadingState from "@/components/common/LoadingState";
+import {
+    useToast,
+} from "@/components/common/ToastProvider";
 import NoteCreateForm from "@/components/notes/NoteCreateForm";
 import NoteList from "@/components/notes/NoteList";
 
@@ -27,6 +32,8 @@ import type {
 } from "@/types/schedule";
 
 export default function NotesPage() {
+    const {showToast} = useToast();
+
     const [content, setContent] = useState("");
     const [notes, setNotes] =
         useState<NoteResponse[]>([]);
@@ -71,7 +78,7 @@ export default function NotesPage() {
             setErrorMessage("");
         } catch {
             setErrorMessage(
-                "노트 목록을 불러오지 못했습니다."
+                "노트 목록을 불러오지 못했습니다.",
             );
         }
     };
@@ -84,7 +91,7 @@ export default function NotesPage() {
                 setNotes(response.content);
             } catch {
                 setErrorMessage(
-                    "노트 목록을 불러오지 못했습니다."
+                    "노트 목록을 불러오지 못했습니다.",
                 );
             } finally {
                 setIsLoading(false);
@@ -95,7 +102,7 @@ export default function NotesPage() {
     }, []);
 
     const handleCreate = async (
-        event: FormEvent<HTMLFormElement>
+        event: FormEvent<HTMLFormElement>,
     ) => {
         event.preventDefault();
 
@@ -114,9 +121,11 @@ export default function NotesPage() {
             setContent("");
 
             await loadNotes();
+
+            showToast("노트를 저장했습니다.");
         } catch {
             setErrorMessage(
-                "노트 작성에 실패했습니다."
+                "노트 작성에 실패했습니다.",
             );
         } finally {
             setIsSubmitting(false);
@@ -124,7 +133,7 @@ export default function NotesPage() {
     };
 
     const handleEditStart = (
-        note: NoteResponse
+        note: NoteResponse,
     ) => {
         setEditingNoteId(note.noteId);
         setEditingContent(note.content);
@@ -136,7 +145,7 @@ export default function NotesPage() {
     };
 
     const handleUpdate = async (
-        noteId: number
+        noteId: number,
     ) => {
         if (!editingContent.trim()) {
             return;
@@ -153,19 +162,21 @@ export default function NotesPage() {
             setEditingContent("");
 
             await loadNotes();
+
+            showToast("노트를 수정했습니다.");
         } catch {
             setErrorMessage(
-                "노트 수정에 실패했습니다."
+                "노트 수정에 실패했습니다.",
             );
         }
     };
 
     const handleDelete = async (
-        noteId: number
+        noteId: number,
     ) => {
         const confirmed =
             window.confirm(
-                "이 노트를 삭제하시겠습니까?"
+                "이 노트를 삭제하시겠습니까?",
             );
 
         if (!confirmed) {
@@ -186,15 +197,17 @@ export default function NotesPage() {
             });
 
             await loadNotes();
+
+            showToast("노트를 삭제했습니다.");
         } catch {
             setErrorMessage(
-                "노트 삭제에 실패했습니다."
+                "노트 삭제에 실패했습니다.",
             );
         }
     };
 
     const handleExtractSchedule = async (
-        noteId: number
+        noteId: number,
     ) => {
         try {
             setExtractingNoteId(noteId);
@@ -209,7 +222,7 @@ export default function NotesPage() {
             }));
         } catch {
             setErrorMessage(
-                "일정 추출에 실패했습니다."
+                "일정 추출에 실패했습니다.",
             );
         } finally {
             setExtractingNoteId(null);
@@ -292,6 +305,12 @@ export default function NotesPage() {
                     [key]: true,
                 }),
             );
+
+            showToast(
+                candidate.type === "EVENT"
+                    ? "일정을 등록했습니다."
+                    : "할 일을 등록했습니다.",
+            );
         } catch {
             setErrorMessage(
                 candidate.type === "EVENT"
@@ -321,20 +340,10 @@ export default function NotesPage() {
                 onSubmit={handleCreate}
             />
 
-            {errorMessage && (
-                <div className="rounded-xl border border-red-100 bg-red-50 px-4 py-3">
-                    <p className="text-sm text-red-600">
-                        {errorMessage}
-                    </p>
-                </div>
-            )}
+            <ErrorMessage message={errorMessage} />
 
             {isLoading ? (
-                <div className="flex min-h-40 items-center justify-center">
-                    <p className="text-sm text-zinc-500">
-                        불러오는 중...
-                    </p>
-                </div>
+                <LoadingState />
             ) : (
                 <NoteList
                     notes={notes}
@@ -366,7 +375,7 @@ export default function NotesPage() {
                     }}
                     onExtractSchedule={(noteId) => {
                         void handleExtractSchedule(
-                            noteId
+                            noteId,
                         );
                     }}
                     onCandidateChange={

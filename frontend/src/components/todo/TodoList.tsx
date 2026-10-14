@@ -1,3 +1,4 @@
+import EmptyState from "@/components/common/EmptyState";
 import TodoItem from "@/components/todo/TodoItem";
 
 type TodoResponse = {
@@ -10,12 +11,15 @@ type TodoResponse = {
 
 type TodoListProps = {
     todos: TodoResponse[];
-    onToggleDone: (todoId: number, isDone: boolean) => Promise<void>;
+    onToggleDone: (
+        todoId: number,
+        isDone: boolean,
+    ) => Promise<void>;
     onDelete: (todoId: number) => Promise<void>;
     onUpdate: (
         todoId: number,
         content: string,
-        dueAt: string | null
+        dueAt: string | null,
     ) => Promise<void>;
 };
 
@@ -25,15 +29,18 @@ export default function TodoList({
                                      onDelete,
                                      onUpdate,
                                  }: TodoListProps) {
+    if (todos.length === 0) {
+        return (
+            <EmptyState
+                title="등록된 할 일이 없습니다."
+                description="새로운 할 일을 추가해보세요."
+            />
+        );
+    }
+
     return (
         <section className="rounded-2xl border border-zinc-200 bg-white p-5">
             <div className="space-y-3">
-                {todos.length === 0 && (
-                    <p className="text-sm text-zinc-500">
-                        등록된 할 일이 없습니다.
-                    </p>
-                )}
-
                 {todos.map((todo) => (
                     <TodoItem
                         key={todo.todoId}

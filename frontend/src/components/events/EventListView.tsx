@@ -2,6 +2,7 @@
 
 import {useMemo, useState} from "react";
 
+import EmptyState from "@/components/common/EmptyState";
 import type {EventSummary} from "@/lib/events-api";
 
 type EventListViewProps = {
@@ -19,7 +20,8 @@ export default function EventListView({
                                           events,
                                           onEventClick,
                                       }: EventListViewProps) {
-    const [showPastEvents, setShowPastEvents] = useState(false);
+    const [showPastEvents, setShowPastEvents] =
+        useState(false);
 
     const {
         upcomingGroups,
@@ -32,50 +34,65 @@ export default function EventListView({
         const sortedEvents = [...events].sort(
             (a, b) =>
                 new Date(a.startAt).getTime() -
-                new Date(b.startAt).getTime()
+                new Date(b.startAt).getTime(),
         );
 
         const upcoming = sortedEvents.filter(
-            (event) => new Date(event.startAt) >= today
+            (event) =>
+                new Date(event.startAt) >= today,
         );
 
         const past = sortedEvents.filter(
-            (event) => new Date(event.startAt) < today
+            (event) =>
+                new Date(event.startAt) < today,
         );
 
         return {
-            upcomingGroups: groupEventsByMonth(upcoming),
-            pastGroups: groupEventsByMonth(past),
-            upcomingEventCount: upcoming.length,
-            pastEventCount: past.length,
+            upcomingGroups:
+                groupEventsByMonth(upcoming),
+            pastGroups:
+                groupEventsByMonth(past),
+            upcomingEventCount:
+            upcoming.length,
+            pastEventCount:
+            past.length,
         };
     }, [events]);
 
     return (
         <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_240px]">
             <section className="rounded-2xl border border-zinc-200 bg-white p-5">
-                {upcomingGroups.length === 0 && (
-                    <p className="py-6 text-sm text-zinc-500">
-                        예정된 일정이 없습니다.
-                    </p>
+                {upcomingGroups.length === 0 ? (
+                    <EmptyState
+                        title="예정된 일정이 없습니다."
+                        description="새 일정을 추가하거나 지난 일정을 확인해보세요."
+                    />
+                ) : (
+                    <div className="space-y-8">
+                        {upcomingGroups.map(
+                            (group) => (
+                                <EventMonthGroup
+                                    key={
+                                        group.monthKey
+                                    }
+                                    group={group}
+                                    onEventClick={
+                                        onEventClick
+                                    }
+                                />
+                            ),
+                        )}
+                    </div>
                 )}
-
-                <div className="space-y-8">
-                    {upcomingGroups.map((group) => (
-                        <EventMonthGroup
-                            key={group.monthKey}
-                            group={group}
-                            onEventClick={onEventClick}
-                        />
-                    ))}
-                </div>
 
                 {pastEventCount > 0 && (
                     <div className="mt-8 border-t border-zinc-100 pt-5">
                         <button
                             type="button"
                             onClick={() =>
-                                setShowPastEvents((prev) => !prev)
+                                setShowPastEvents(
+                                    (prev) => !prev,
+                                )
                             }
                             className="text-sm font-medium text-zinc-500 hover:text-zinc-900"
                         >
@@ -86,14 +103,20 @@ export default function EventListView({
 
                         {showPastEvents && (
                             <div className="mt-6 space-y-8">
-                                {pastGroups.map((group) => (
-                                    <EventMonthGroup
-                                        key={`past-${group.monthKey}`}
-                                        group={group}
-                                        onEventClick={onEventClick}
-                                        muted
-                                    />
-                                ))}
+                                {pastGroups.map(
+                                    (group) => (
+                                        <EventMonthGroup
+                                            key={`past-${group.monthKey}`}
+                                            group={
+                                                group
+                                            }
+                                            onEventClick={
+                                                onEventClick
+                                            }
+                                            muted
+                                        />
+                                    ),
+                                )}
                             </div>
                         )}
                     </div>
@@ -114,7 +137,9 @@ export default function EventListView({
                 <div className="mt-5 space-y-4">
                     <SummaryItem
                         label="예정 일정"
-                        value={upcomingEventCount}
+                        value={
+                            upcomingEventCount
+                        }
                     />
 
                     <SummaryItem
@@ -132,7 +157,9 @@ export default function EventListView({
                     <button
                         type="button"
                         onClick={() =>
-                            setShowPastEvents((prev) => !prev)
+                            setShowPastEvents(
+                                (prev) => !prev,
+                            )
                         }
                         className="mt-6 w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm text-zinc-600 hover:bg-zinc-50"
                     >
@@ -197,7 +224,9 @@ function EventMonthGroup({
                         key={event.eventId}
                         type="button"
                         onClick={() =>
-                            onEventClick(event.eventId)
+                            onEventClick(
+                                event.eventId,
+                            )
                         }
                         className="flex w-full items-start gap-4 rounded-lg px-2 py-4 text-left transition hover:bg-zinc-50"
                     >
@@ -209,7 +238,9 @@ function EventMonthGroup({
                                         : "text-zinc-700"
                                 }`}
                             >
-                                {formatDay(event.startAt)}
+                                {formatDay(
+                                    event.startAt,
+                                )}
                             </p>
                         </div>
 
@@ -231,7 +262,9 @@ function EventMonthGroup({
                                         : "text-zinc-500"
                                 }`}
                             >
-                                {formatEventTime(event)}
+                                {formatEventTime(
+                                    event,
+                                )}
                             </p>
                         </div>
                     </button>
@@ -242,75 +275,98 @@ function EventMonthGroup({
 }
 
 function groupEventsByMonth(
-    events: EventSummary[]
+    events: EventSummary[],
 ): EventGroup[] {
-    const groups = new Map<string, EventSummary[]>();
+    const groups =
+        new Map<string, EventSummary[]>();
 
     for (const event of events) {
-        const date = new Date(event.startAt);
+        const date =
+            new Date(event.startAt);
 
-        const monthKey = `${date.getFullYear()}-${String(
-            date.getMonth() + 1
-        ).padStart(2, "0")}`;
+        const monthKey =
+            `${date.getFullYear()}-${String(
+                date.getMonth() + 1,
+            ).padStart(2, "0")}`;
 
-        const existing = groups.get(monthKey);
+        const existing =
+            groups.get(monthKey);
 
         if (existing) {
             existing.push(event);
         } else {
-            groups.set(monthKey, [event]);
+            groups.set(
+                monthKey,
+                [event],
+            );
         }
     }
 
-    return Array.from(groups.entries()).map(
+    return Array.from(
+        groups.entries(),
+    ).map(
         ([monthKey, groupedEvents]) => {
-            const firstEvent = groupedEvents[0];
-            const firstDate = new Date(firstEvent.startAt);
+            const firstEvent =
+                groupedEvents[0];
+
+            const firstDate =
+                new Date(firstEvent.startAt);
 
             return {
                 monthKey,
-                monthLabel: new Intl.DateTimeFormat(
-                    "ko-KR",
-                    {
-                        year: "numeric",
-                        month: "long",
-                    }
-                ).format(firstDate),
+                monthLabel:
+                    new Intl.DateTimeFormat(
+                        "ko-KR",
+                        {
+                            year: "numeric",
+                            month: "long",
+                        },
+                    ).format(firstDate),
                 events: groupedEvents,
             };
-        }
+        },
     );
 }
 
 function formatDay(value: string) {
-    return new Intl.DateTimeFormat("ko-KR", {
-        month: "numeric",
-        day: "numeric",
-    }).format(new Date(value));
+    return new Intl.DateTimeFormat(
+        "ko-KR",
+        {
+            month: "numeric",
+            day: "numeric",
+        },
+    ).format(new Date(value));
 }
 
-function formatEventTime(event: EventSummary) {
+function formatEventTime(
+    event: EventSummary,
+) {
     if (event.allDay) {
         return "하루 종일";
     }
 
-    const start = formatTime(event.startAt);
+    const start =
+        formatTime(event.startAt);
 
     if (!event.endAt) {
         return start;
     }
 
-    const end = formatTime(event.endAt);
+    const end =
+        formatTime(event.endAt);
 
     return `${start} ~ ${end}`;
 }
 
 function formatTime(value: string) {
-    return new Intl.DateTimeFormat("ko-KR", {
-        hour: "2-digit",
-        minute: "2-digit",
-        hour12: false,
-    }).format(new Date(value));
+    return new Intl.DateTimeFormat(
+        "ko-KR",
+        {
+            hour: "2-digit",
+            minute: "2-digit",
+            hour12: false,
+        },
+    ).format(new Date(value));
 }
 
 function startOfToday(date: Date) {
@@ -320,6 +376,6 @@ function startOfToday(date: Date) {
         date.getDate(),
         0,
         0,
-        0
+        0,
     );
 }
