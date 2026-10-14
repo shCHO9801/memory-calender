@@ -1,26 +1,51 @@
 "use client";
 
-import {type FormEvent, useEffect, useState} from "react";
+import {
+    type FormEvent,
+    useEffect,
+    useState,
+} from "react";
 import {useRouter} from "next/navigation";
 
 import {signIn} from "@/lib/auth";
-import {getAccessToken, setAccessToken,} from "@/lib/auth-storage";
+import {
+    getAccessToken,
+    isAccessTokenExpired,
+    removeAccessToken,
+    setAccessToken,
+} from "@/lib/auth-storage";
 
 export default function LoginPage() {
     const router = useRouter();
 
     const [email, setEmail] = useState("");
-    const [password, setPassword] = useState("");
-    const [errorMessage, setErrorMessage] = useState("");
-    const [isLoading, setIsLoading] = useState(false);
+    const [password, setPassword] =
+        useState("");
+
+    const [errorMessage, setErrorMessage] =
+        useState("");
+
+    const [isLoading, setIsLoading] =
+        useState(false);
 
     useEffect(() => {
-        if (getAccessToken()) {
-            router.replace("/dashboard");
+        const token = getAccessToken();
+
+        if (!token) {
+            return;
         }
+
+        if (isAccessTokenExpired(token)) {
+            removeAccessToken();
+            return;
+        }
+
+        router.replace("/dashboard");
     }, [router]);
 
-    const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    const handleSubmit = async (
+        event: FormEvent<HTMLFormElement>,
+    ) => {
         event.preventDefault();
 
         setErrorMessage("");
@@ -36,7 +61,9 @@ export default function LoginPage() {
 
             router.push("/dashboard");
         } catch {
-            setErrorMessage("이메일 또는 비밀번호를 확인해주세요.");
+            setErrorMessage(
+                "이메일 또는 비밀번호를 확인해주세요.",
+            );
         } finally {
             setIsLoading(false);
         }
@@ -71,7 +98,11 @@ export default function LoginPage() {
                             id="email"
                             type="email"
                             value={email}
-                            onChange={(event) => setEmail(event.target.value)}
+                            onChange={(event) =>
+                                setEmail(
+                                    event.target.value,
+                                )
+                            }
                             placeholder="example@email.com"
                             autoComplete="email"
                             required
@@ -91,7 +122,11 @@ export default function LoginPage() {
                             id="password"
                             type="password"
                             value={password}
-                            onChange={(event) => setPassword(event.target.value)}
+                            onChange={(event) =>
+                                setPassword(
+                                    event.target.value,
+                                )
+                            }
                             placeholder="비밀번호"
                             autoComplete="current-password"
                             required
@@ -110,18 +145,22 @@ export default function LoginPage() {
                         disabled={isLoading}
                         className="w-full rounded-lg bg-zinc-900 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-50"
                     >
-                        {isLoading ? "로그인 중..." : "로그인"}
+                        {isLoading
+                            ? "로그인 중..."
+                            : "로그인"}
                     </button>
                 </form>
 
                 <div className="mt-6 flex items-center justify-center gap-2 text-sm">
-          <span className="text-zinc-500">
-            계정이 없나요?
-          </span>
+                    <span className="text-zinc-500">
+                        계정이 없나요?
+                    </span>
 
                     <button
                         type="button"
-                        onClick={() => router.push("/signup")}
+                        onClick={() =>
+                            router.push("/signup")
+                        }
                         className="font-medium text-zinc-900 hover:underline"
                     >
                         회원가입
